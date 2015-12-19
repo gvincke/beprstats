@@ -20,7 +20,6 @@ library(png)
 # Create a reactive object here that we can share between all the sessions.
 SRV <- reactiveValues(count=0)#Session reactive values
 cc <- readPNG("www/img/cc_by_320x60.png")
-raceresults <- read.csv("data/results.csv", sep=",", dec=".")
 
 shinyServer(function(input, output, session) {
   # https://gist.github.com/trestletech/9926129
@@ -44,21 +43,35 @@ shinyServer(function(input, output, session) {
     return(sapply(text,function(s) lang[s,input$language], USE.NAMES=FALSE))
   }
   
-
+  #races results
+  results <- read.csv("data/results.csv", sep=",", dec=".")
+  results$speedkm<-(results$speed/1000)*60
   
+  observe({#http://stackoverflow.com/questions/28119964/dynamic-input-selector-based-on-uploaded-data
+    v<-sort(as.vector(unique(results$racename))) 
+    v<-c(" "="empty",v)
+    updateSelectInput(#http://www.inside-r.org/packages/cran/shiny/docs/updateSelectInput
+      session,
+      "races",
+      choices=v)
+  })
+  
+  
+  
+  observe({#http://stackoverflow.com/questions/28119964/dynamic-input-selector-based-on-uploaded-data
+    data<-results
+    data<-subset(data,racename %in% c(input$races))
+    v<-sort(as.vector(unique(data$racedate))) 
+    v<-c(" "="empty",v)
+    updateSelectInput(#http://www.inside-r.org/packages/cran/shiny/docs/updateSelectInput
+      session,
+      "editions",
+      choices=v)
+  })
 
   getInputValues<-reactive({
     return(input)#collect all inputs
   })
-  
-
-  
-
-
-  
-  
-
-
 
 
   getComputedValues<-reactive({
@@ -68,7 +81,28 @@ shinyServer(function(input, output, session) {
     return(cv)
   })
   
-
+  output$plot <- renderPlot({
+    v<-getInputValues()
+    cv<-getComputedValues()
+    m<-matrix(c(1,2,3,4),2,2,byrow=TRUE)
+    layout(m,width=c(1,1,1,1))
+    
+    data<-results
+    data<-subset(data,racename %in% c(v$races))
+    data<-subset(data,racedate %in% c(v$editions))
+    par(bty="n")
+    boxplot(speed~age,data=data, col=rainbow(length(unique(data$age))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Age (années)",main="Distribution des vitesses par classe d'age")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+    
+    data$distkm<-data$dist/1000
+    plot(data$distkm,data$speed,ylim=c(min(data$speed),max(data$speed)),ylab="Vitesse (m/min)",xlab="Distance (km)",main="Distribution des vitesses par unité de distance")
+    
+    #hist(data$age,xlab="Age (années)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe d'age")
+    n <- table(data$age)
+    bp<-barplot(n, xlab="Age (années)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe d'age",col=rainbow(length(unique(data$age))),ylim=c(0,max(n*1.2)))
+    ## Add text at top of bars
+    text(x = bp, y = n, label = n, pos = 3, cex = 0.8, col = "red")
+    hist(data$speed,breaks=20,xlab="Vitesse (m/min)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe de vitesse")
+  })
 
 
 #UI
@@ -81,6 +115,15 @@ output$uiSBlanguage<- renderUI({
   strong(HTML(paste(tr("Language"),":",sep=" ")))
 })
 
+output$uiSBRaces <- renderUI({
+  strong(HTML(paste(tr("Races"),":",sep=" ")))
+})
+output$uiSBRacesLocLink <- renderUI({
+  HTML(tr("RacesLocLink"))
+})
+output$uiSBRacesEditions <- renderUI({
+  strong(HTML(paste(tr("Editions"),":",sep=" ")))
+})
 
 output$uiSBlicence <- renderUI({
   HTML(paste("<a rel='license' href='http://creativecommons.org/licenses/by/2.0/be/'><img alt='Licence Creative Commons' style='border-width:0' src='img/cc_by_80x15.png' /></a>&nbsp;",tr("LicenceSeeCredits"),sep=""))
@@ -90,7 +133,7 @@ output$uiMain <- renderUI({
   tabsetPanel(id="Tabset",selected=1,
               tabPanel(
                 tr("Statistics"),
-                plotOutput("map",height=700),#,height = "auto"
+                plotOutput("plot",height=700),#,height = "auto"
                 value=1
               ),
               tabPanel(
@@ -136,7 +179,5 @@ output$uiCredits2 <- renderUI({
   )
 })
 
-output$uiOthersAnimations <- renderUI({
-  p(HTML(paste("<strong>",tr("OtherApps")," :</strong> ","<a href='http://yapluka.be/sapps/beprmap/' target='_blank'>Belgium Pigeon Racing Map</a>",sep="")))
-})
+
 })
