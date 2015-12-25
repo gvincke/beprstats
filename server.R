@@ -77,31 +77,51 @@ shinyServer(function(input, output, session) {
   getComputedValues<-reactive({
     v<-getInputValues() # get all values of input list
     cv<-list()#created empty computed values list
-    
+    cv$data<-results
+    cv$data<-subset(cv$data,racename %in% c(v$races))
+    cv$data<-subset(cv$data,racedate %in% c(v$editions))
+    cv$data$distkm<-cv$data$dist/1000
     return(cv)
   })
   
   output$plot <- renderPlot({
     v<-getInputValues()
     cv<-getComputedValues()
-    m<-matrix(c(1,2,3,4),2,2,byrow=TRUE)
-    layout(m,width=c(1,1,1,1))
-    
-    data<-results
-    data<-subset(data,racename %in% c(v$races))
-    data<-subset(data,racedate %in% c(v$editions))
-    par(bty="n")
-    boxplot(speed~age,data=data, col=rainbow(length(unique(data$age))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Age (années)",main="Distribution des vitesses par classe d'age")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
-    
-    data$distkm<-data$dist/1000
-    plot(data$distkm,data$speed,ylim=c(min(data$speed),max(data$speed)),ylab="Vitesse (m/min)",xlab="Distance (km)",main="Distribution des vitesses par unité de distance")
-    
-    #hist(data$age,xlab="Age (années)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe d'age")
-    n <- table(data$age)
-    bp<-barplot(n, xlab="Age (années)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe d'age",col=rainbow(length(unique(data$age))),ylim=c(0,max(n*1.2)))
-    ## Add text at top of bars
-    text(x = bp, y = n, label = n, pos = 3, cex = 0.8, col = "red")
-    hist(data$speed,breaks=20,xlab="Vitesse (m/min)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe de vitesse")
+    m<-matrix(c(1,2,3,4,5,6),2,3,byrow=TRUE)
+    layout(m,width=c(1,3,2,1,3,2))
+    if(v$races!="empty" & v$editions!="empty"){
+      
+      #http://stackoverflow.com/questions/29185996/plot-empty-groups-in-boxplot
+      par(bty="n")
+      catmax<-max(cv$data$cat)
+      agemax<-max(cv$data$age)
+      
+      cv$data$cattoplot <- factor(cv$data$cat,levels = 0:catmax)#create categories and force adding of empty groups
+      boxplot(speed~cattoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Catégorie",main="Distribution des vitesses par catégorie",names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+      
+      cv$data$agetoplot <- factor(cv$data$age,levels = 0:agemax)#create categories and force adding of empty groups
+      boxplot(speed~agetoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Age (années)",main="Distribution des vitesses par classe d'age")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+
+      plot(cv$data$distkm,cv$data$speed,ylim=c(min(cv$data$speed),max(cv$data$speed)),ylab="Vitesse (m/min)",xlab="Distance (km)",main="Distribution des vitesses par unité de distance")
+      
+      n <- table(factor(cv$data$cat,levels = 0:catmax))#http://r.789695.n4.nabble.com/creating-empty-cells-with-table-td798211.html
+      bp<-barplot(n, xlab="Catégorie",ylab="Nombre de pigeons",main="Nombre de pigeons par catégorie",col=rainbow(length(unique(cv$data$age))),ylim=c(0,max(n*1.2)),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
+      text(x = bp, y = n, label = n, pos = 3, cex = 0.8, col = "red")## Add text at top of bars
+      
+      agemax<-max(cv$data$age)
+      n <- table(factor(cv$data$age,levels = 0:agemax))#http://r.789695.n4.nabble.com/creating-empty-cells-with-table-td798211.html
+      bp<-barplot(n, xlab="Age (années)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe d'age",col=rainbow(length(unique(cv$data$age))),ylim=c(0,max(n*1.2)))
+      text(x = bp, y = n, label = n, pos = 3, cex = 0.8, col = "red")## Add text at top of bars
+
+      
+      hist(cv$data$speed,breaks=20,xlab="Vitesse (m/min)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe de vitesse")
+    }
+  })
+  
+  output$Datas = renderDataTable({
+    v<-getInputValues()
+    cv<-getComputedValues()
+    cv$data
   })
 
 
@@ -116,13 +136,21 @@ output$uiSBlanguage<- renderUI({
 })
 
 output$uiSBRaces <- renderUI({
-  strong(HTML(paste(tr("Races"),":",sep=" ")))
+  strong(HTML(paste(tr("Races"),"*",":",sep=" ")))
 })
 output$uiSBRacesLocLink <- renderUI({
-  HTML(tr("RacesLocLink"))
+  HTML(paste("*",":",tr("RacesLocLink"),sep=" "))
 })
 output$uiSBRacesEditions <- renderUI({
   strong(HTML(paste(tr("Editions"),":",sep=" ")))
+})
+
+output$uiSBsummary <- renderUI({
+  mainPanel(
+    # Faire des requêtes sur tous les concours de même id et donner stats générales dès que concours est sélectionné
+    # Second bloc : stats générales de cette édition
+    HTML(),
+  )
 })
 
 output$uiSBlicence <- renderUI({
@@ -138,7 +166,7 @@ output$uiMain <- renderUI({
               ),
               tabPanel(
                 tr("Datas"),
-                #dataTableOutput('Datas'),
+                dataTableOutput('Datas'),
                 value=2
               ),
               tabPanel(
