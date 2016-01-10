@@ -15,11 +15,23 @@
 # Sys.setlocale("LC_ALL", "fr_FR.UTF-8")#to be sure that accents in text will be allowed in plots
 
 library(shiny)
+library(plotrix)#legend.color
 library(png)
 
 # Create a reactive object here that we can share between all the sessions.
 SRV <- reactiveValues(count=0)#Session reactive values
 cc <- readPNG("www/img/cc_by_320x60.png")
+
+# TODO
+# Ajouter legendes et titres et explications dans neutralisation et poteau
+# Ajouter les nombres bruts aux barplots : pour ça il faut avoir créé liste des concours avec leur caractéristiques (neutralisations, nombre de pigeons par catégories, etc)
+# Réfléchir a montrer les changement de classement (combien de pigeons changent de position sans neutralisations)
+# Créer classement général
+# Compter combien de victoires générale par age et catégorie et le mettre dans le summary
+# Summary adapter le template grace aux colonnes et mettre des boites de texte à droite des plots
+# Calculer un classement ou tout le monde est considéré comme au poteau, et comparer avec autres modes de classements en calculant le % de pigeons qui changent de place
+# Distance : proposer de changer le cadre de référence et afficher l'es heures de vol en y distance en x et ligne de vitesse en oblique : pour ça ajouter les heures de vol avec et sans neutralisation ?
+
 
 shinyServer(function(input, output, session) {
   # https://gist.github.com/trestletech/9926129
@@ -43,9 +55,36 @@ shinyServer(function(input, output, session) {
     return(sapply(text,function(s) lang[s,input$language], USE.NAMES=FALSE))
   }
   
+  getSpeedScaleSelection<-reactive({
+    speedselect <- read.delim("data/lang-speedscaleselection.csv", header = TRUE, sep = "\t", as.is = TRUE) 
+    row.names(speedselect)<-speedselect$key #to have key in both row.names and $key. If we whant only as row.names add row.names=1 to read.delim
+    l<-list()
+    for(i in 1:nrow(speedselect)){
+      l[[speedselect[[input$language]][i]]]<-speedselect$key[i]
+    }
+    return(l)
+  })
+  
+  yesno <- read.delim("data/lang-yesno.csv", header = TRUE, sep = "\t", as.is = TRUE) 
+  row.names(yesno)<-yesno$key #to have key in both row.names and $key. If we whant only as row.names add row.names=1 to read.delim
+  getYesNoSelection<-reactive({
+    l<-list()
+    for(i in 1:nrow(yesno)){
+      l[[yesno[[input$language]][i]]]<-yesno$key[i]
+    }
+    return(l)
+  })
+  
+  roundUpNice <- function(x, nice=c(1,2,4,5,6,8,10)) {#http://stackoverflow.com/questions/6461209/how-to-round-up-to-the-nearest-10-or-100-or-x
+    if(length(x) != 1) stop("'x' must be of length 1")
+    10^floor(log10(x)) * nice[[which(x <= 10^floor(log10(x)) * nice)[[1]]]]
+  }
+  
   #races results
+  # Create a solution of read import and merge several csv files = more efficient : http://www.r-bloggers.com/merging-multiple-data-files-into-one-data-frame/
+  # Question : mieux vaut il crer une grosse DB d'abord, et réduire les données ensuite, ou d'abord récolter les infos, faire les choix, et créer la db nécéssaire à la volée ?
   results <- read.csv("data/results.csv", sep=",", dec=".")
-  results$speedkm<-(results$speed/1000)*60
+  results$speedkmh<-(results$speed/1000)*60
   
   observe({#http://stackoverflow.com/questions/28119964/dynamic-input-selector-based-on-uploaded-data
     v<-sort(as.vector(unique(results$racename))) 
@@ -55,7 +94,6 @@ shinyServer(function(input, output, session) {
       "races",
       choices=v)
   })
-  
   
   
   observe({#http://stackoverflow.com/questions/28119964/dynamic-input-selector-based-on-uploaded-data
@@ -68,6 +106,21 @@ shinyServer(function(input, output, session) {
       "editions",
       choices=v)
   })
+  
+  
+  DistFactors <- read.delim("data/lang-distancefactors.csv", header = TRUE, sep = "\t", as.is = TRUE) 
+  row.names(DistFactors)<-DistFactors$key #to have key in both row.names and $key. If we whant only as row.names add row.names=1 to read.delim
+  observe({#http://stackoverflow.com/questions/28119964/dynamic-input-selector-based-on-uploaded-data
+    l<-list()
+    l<-c(" "="unselected",l)
+    for(i in 1:nrow(DistFactors)){
+      l[[DistFactors[[input$language]][i]]]<-DistFactors$key[i]
+    }
+    updateSelectInput(#http://www.inside-r.org/packages/cran/shiny/docs/updateSelectInput
+      session,
+      "distfactors",
+      choices=l)
+  })
 
   getInputValues<-reactive({
     return(input)#collect all inputs
@@ -78,50 +131,519 @@ shinyServer(function(input, output, session) {
     v<-getInputValues() # get all values of input list
     cv<-list()#created empty computed values list
     cv$data<-results
-    cv$data<-subset(cv$data,racename %in% c(v$races))
-    cv$data<-subset(cv$data,racedate %in% c(v$editions))
+    cv$dataS<-results#pour le summary
+    if(v$races!="empty"){
+      cv$data<-subset(cv$data,racename %in% c(v$races))
+      cv$dataS<-subset(cv$dataS,racename %in% c(v$races))
+    }
+    if(v$editions!="empty"){
+      cv$data<-subset(cv$data,racedate %in% c(v$editions))
+    }
+    if(v$speedneutral=='n'){
+      cv$data$speedtoplot<-cv$data$speedWN
+      cv$dataS$speedtoplot<-cv$dataS$speedWN
+    } else {
+      cv$data$speedtoplot<-cv$data$speed
+      cv$dataS$speedtoplot<-cv$dataS$speed
+    }
+    if(v$speedloosegain=='n'){
+      cv$data<-subset(cv$data,speedtoplot >= 800)
+      cv$dataS<-subset(cv$dataS,speedtoplot >= 800)
+    }
+    cv$data$rank<-rank(-cv$data$speed,na.last='NA',ties.method='min')
+    cv$data$rankWN<-rank(-cv$data$speedWN,na.last='NA',ties.method='min')
+    cv$data$rankDiff<-cv$data$rank-cv$data$rankWN
+    cv$data$racedate <- factor(cv$data$racedate)#http://stackoverflow.com/questions/1195826/drop-factor-levels-in-a-subsetted-data-frame
     cv$data$distkm<-cv$data$dist/1000
+    cv$datatoshow<-subset(cv$data,select=c(ring,age,owner,location,racename,racedate,cat,catpos,ownerpos,dist,time,speed,speedkmh,rank,rankWN,rankDiff))
     return(cv)
   })
   
-  output$plot <- renderPlot({
+  output$plotSummary <- renderPlot({
     v<-getInputValues()
     cv<-getComputedValues()
-    m<-matrix(c(1,2,3,4,5,6),2,3,byrow=TRUE)
-    layout(m,width=c(1,3,2,1,3,2))
-    if(v$races!="empty" & v$editions!="empty"){
-      
-      #http://stackoverflow.com/questions/29185996/plot-empty-groups-in-boxplot
+    if(v$races!="empty"){
+      m<-matrix(c(1,1,2),3,1,byrow=TRUE)
+      layout(m,width=c(1,1))
+      #Nombre total d'engagés par édition, par catégorie
+      #Podium du nombre de victoires totales par catégories, et par age
       par(bty="n")
-      catmax<-max(cv$data$cat)
-      agemax<-max(cv$data$age)
+      if(v$speedscale=='man'){
+        boxplot(speedtoplot~racedate,data=cv$dataS, col=rainbow(length(unique(cv$dataS$racedate))),range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="Dates",main="Distribution des vitesses par édition",xaxt="n")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+      } else {
+        boxplot(speedtoplot~racedate,data=cv$dataS, col=rainbow(length(unique(cv$dataS$racedate))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Dates",main="Distribution des vitesses par édition",xaxt="n")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+      }
+      axis(1, at=1:length(unique(cv$dataS$racedate)), labels=unique(cv$dataS$racedate),las = 2, cex.axis = 0.8)
       
-      cv$data$cattoplot <- factor(cv$data$cat,levels = 0:catmax)#create categories and force adding of empty groups
-      boxplot(speed~cattoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Catégorie",main="Distribution des vitesses par catégorie",names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
-      
-      cv$data$agetoplot <- factor(cv$data$age,levels = 0:agemax)#create categories and force adding of empty groups
-      boxplot(speed~agetoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Age (années)",main="Distribution des vitesses par classe d'age")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
-
-      plot(cv$data$distkm,cv$data$speed,ylim=c(min(cv$data$speed),max(cv$data$speed)),ylab="Vitesse (m/min)",xlab="Distance (km)",main="Distribution des vitesses par unité de distance")
-      
-      n <- table(factor(cv$data$cat,levels = 0:catmax))#http://r.789695.n4.nabble.com/creating-empty-cells-with-table-td798211.html
-      bp<-barplot(n, xlab="Catégorie",ylab="Nombre de pigeons",main="Nombre de pigeons par catégorie",col=rainbow(length(unique(cv$data$age))),ylim=c(0,max(n*1.2)),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
+      n <- table(factor(cv$dataS$racedate))
+      bp<-barplot(n, xlab=" ",xaxt="n",ylab="Nombre de pigeons",main="Nombre total de pigeons",col=rainbow(length(unique(cv$dataS$racedate))),ylim=c(0,roundUpNice(max(n))))
       text(x = bp, y = n, label = n, pos = 3, cex = 0.8, col = "red")## Add text at top of bars
-      
-      agemax<-max(cv$data$age)
-      n <- table(factor(cv$data$age,levels = 0:agemax))#http://r.789695.n4.nabble.com/creating-empty-cells-with-table-td798211.html
-      bp<-barplot(n, xlab="Age (années)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe d'age",col=rainbow(length(unique(cv$data$age))),ylim=c(0,max(n*1.2)))
-      text(x = bp, y = n, label = n, pos = 3, cex = 0.8, col = "red")## Add text at top of bars
-
-      
-      hist(cv$data$speed,breaks=20,xlab="Vitesse (m/min)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe de vitesse")
     }
   })
   
+  output$plotCatAndAge <- renderPlot({
+    v<-getInputValues()
+    cv<-getComputedValues()
+
+
+    if(v$races!="empty" & v$editions!="empty"){
+      m<-matrix(c(1,2,3,4,5,6),2,3,byrow=TRUE)
+      layout(m,width=c(1,1.5,4,1,1.5,4))
+      
+      #http://stackoverflow.com/questions/29185996/plot-empty-groups-in-boxplot
+      par(bty="n")
+      
+      if(v$speedscale=='man'){
+        boxplot(speedtoplot~racedate,data=cv$data, col=rainbow(1),range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="",main="Distribution des vitesses")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+      } else {
+        boxplot(speedtoplot~racedate,data=cv$data, col=rainbow(1),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="",main="Distribution des vitesses")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+      }
+      
+      catmax<-max(cv$data$cat, na.rm=TRUE)
+      agemax<-max(cv$data$age, na.rm=TRUE)
+      
+      cv$data$cattoplot <- factor(cv$data$cat,levels = 0:catmax)#create categories and force adding of empty groups
+      if(v$speedscale=='man'){
+        boxplot(speedtoplot~cattoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="Catégorie",main="Distribution des vitesses par catégorie",names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+      } else {
+        boxplot(speedtoplot~cattoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Catégorie",main="Distribution des vitesses par catégorie",names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+      }
+      
+      
+      cv$data$agetoplot <- factor(cv$data$age,levels = 0:agemax)#create categories and force adding of empty groups
+      if(v$speedscale=='man'){
+        boxplot(speedtoplot~agetoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="Age (années)",main="Distribution des vitesses par classe d'age")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+      } else {
+        boxplot(speedtoplot~agetoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Age (années)",main="Distribution des vitesses par classe d'age")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+      }
+      
+#       if(v$speedscale=='man'){
+#         plot(cv$data$distkm,cv$data$speed,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="Distance (km)",main="Distribution des vitesses par unité de distance",pch=20)#,ylim=c(min(cv$data$speed),max(cv$data$speed))
+#       } else {
+#         plot(cv$data$distkm,cv$data$speed,ylab="Vitesse (m/min)",xlab="Distance (km)",main="Distribution des vitesses par unité de distance",pch=20)#,ylim=c(min(cv$data$speed),max(cv$data$speed))
+#       }
+#       col<-rainbow(length(unique(cv$data$age)))
+#       for(i in 1:length(unique(cv$data$age))){
+#         sub.data<-subset(cv$data,age %in% c(i))
+#         points(sub.data$distkm,sub.data$speed,pch=20,col=col[i])
+#       }
+      
+      
+#       dateconstats<-factor(unique(cv$data$dateconstat))
+#       col<-rainbow(length(dateconstats))
+#       for(i in 1:length(dateconstats)){
+#         dc<-as.character(dateconstats[i])
+#         sub.data<-subset(cv$data,dateconstat %in% c(dc))
+#         points(sub.data$distkm,sub.data$speed,pch=20,col=col[i])
+#       }
+      
+      
+      #reg <- lm(cv$data$speed~cv$data$distkm)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
+      #abline(reg,col="blue")#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
+      #http://stackoverflow.com/questions/24173468/r-print-equation-of-linear-regression-on-the-plot-itself
+      #https://stat.ethz.ch/pipermail/r-help/2007-November/146285.html (confidence interval)
+      
+      n <- table(factor(cv$data$racedate))
+      bp<-barplot(n, xlab=" ",xaxt="n",ylab="Nombre de pigeons",main="Nombre total de pigeons",col=rainbow(1),ylim=c(0,roundUpNice(nrow(cv$data))))
+      text(x = bp, y = n, label = n, pos = 3, cex = 0.8, col = "red")## Add text at top of bars
+      
+      n <- table(factor(cv$data$cat,levels = 0:catmax))#http://r.789695.n4.nabble.com/creating-empty-cells-with-table-td798211.html
+      bp<-barplot(n, xlab="Catégorie",ylab="Nombre de pigeons",main="Nombre de pigeons par catégorie",col=rainbow(length(unique(cv$data$age))),ylim=c(0,roundUpNice(nrow(cv$data))),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
+      text(x = bp, y = n, label = n, pos = 3, cex = 0.8, col = "red")## Add text at top of bars
+      
+      agemax<-max(cv$data$age, na.rm=TRUE)
+      n <- table(factor(cv$data$age,levels = 0:agemax))#http://r.789695.n4.nabble.com/creating-empty-cells-with-table-td798211.html
+      bp<-barplot(n, xlab="Age (années)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe d'age",col=rainbow(length(unique(cv$data$age))),ylim=c(0,roundUpNice(nrow(cv$data))))
+      text(x = bp, y = n, label = n, pos = 3, cex = 0.8, col = "red")## Add text at top of bars
+
+      
+      #hist(cv$data$speed,breaks=20,xlab="Vitesse (m/min)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe de vitesse")
+    }
+  })
+
+output$plotDistance <- renderPlot({
+  v<-getInputValues()
+  cv<-getComputedValues()
+
+  #catmax<-max(cv$data$cat, na.rm=TRUE)
+  par(bty="n")#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html mais je commente oma = c(1, 1, 4, 1),mar=c(1,1,1,1), sinon on ne vois plus les labels
+
+  
+  if(v$races!="empty" & v$editions!="empty"){
+    if(v$speedscale=='man'){
+      plot(cv$data$distkm,cv$data$speedtoplot,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="Distance (km)",main="",pch=20,col='gray50')#,ylim=c(min(cv$data$speed),max(cv$data$speed))
+    } else {
+      plot(cv$data$distkm,cv$data$speedtoplot,ylab="Vitesse (m/min)",xlab="Distance (km)",main="",pch=20,col='gray50')#,ylim=c(min(cv$data$speed),max(cv$data$speed))
+    }
+    
+    if(v$flh==TRUE){#Tracer les lignes d'heures de vol
+      dist.min<-min(cv$data$dist)
+      dist.max<-max(cv$data$dist)
+      dist<-c(dist.min,dist.max)
+      minutes<-seq(60,7200,by=60)#24*5*60 = nb de minutes pour 5j
+      for(i in 1:length(minutes)){
+        #obtenir les coordonées des deux points : calculer la vitesse ici pour couvrir la dist dans le temps impartis
+        speed.min<-dist.min/minutes[i]
+        speed.max<-dist.max/minutes[i]
+        speed<-c(speed.min,speed.max)
+        #calculer le modèle de régression linéaire
+        #     modl<-lm(speed~dist)
+        # abline(modl)
+        distkm<-dist/1000
+        lines(distkm,speed,lty=2,col='gray')
+        text(c(distkm[1]),c(speed.min),paste(as.character(minutes[i]/60),"h",sep=""),col='gray90')
+      }
+    }
+    
+    if(v$lm==TRUE & v$distfactors=='unselected'){
+      reg <- lm(cv$data$speedtoplot~cv$data$distkm)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
+      abline(coef(reg),col="gray50",lwd=2)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
+      abline(coef(reg),col="black",lwd=1,lty=2)
+      #text(max(cv$data$distkm),(max(cv$data$distkm)*coef(reg)[2]+coef(reg)[1])*1.01,paste(tr('Speed'),"=",round(coef(reg)[1],3),"+",round(coef(reg)[2],3),tr('Distance'),sep=""),pos=2,col='blue')
+      text(max(cv$data$distkm),(max(cv$data$distkm)*coef(reg)[2]+coef(reg)[1])*1.02,bquote(.(tr('Slope')) == .(round(coef(reg)[2],3)) ~~ R^2 == .(round(summary(reg)$r.squared,2))),pos=2,col='gray50',cex=1.5)
+      
+    }
+
+    if(v$distfactors=='unselected'){
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de la distance parcourrue")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+    }
+    if(v$distfactors=='age'){
+      agemax<-max(cv$data$age, na.rm=TRUE)
+      ages<-c(0:agemax)
+      cv$data$agetoplot <- factor(cv$data$age,levels = ages)
+      col<-rainbow(length(ages))
+      for(i in 1:length(ages)){
+        #a<-as.character(ages[i])
+        sub.data<-subset(cv$data,age %in% c(ages[i]))
+        points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=col[i])
+      }
+      
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de la distance parcourrue")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      legend('top',legend = ages,col=col,pch=20,title = tr('PigeonsAge'),xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
+    }
+    
+    if(v$distfactors=='date'){#Baser sur jconstat et non les dates !! C'est plus parlant et c'est plus facile de créer une liste de couleur fixe
+      
+#       dateconstats<-sort(factor(unique(cv$data$dateconstat)))
+#       col<-rainbow(length(dateconstats))
+#       for(i in 1:length(dateconstats)){
+#         dc<-as.character(dateconstats[i])
+#         sub.data<-subset(cv$data,dateconstat %in% c(dc))
+#         points(sub.data$distkm,sub.data$speed,pch=20,col=col[i])
+#         if(v$lm==TRUE & nrow(sub.data)>1){
+#           reg <- lm(sub.data$speed~sub.data$distkm)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
+#           abline(coef(reg),col=col[i],lwd=2)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
+#           abline(coef(reg),col='black',lwd=1,lty=2)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
+#           text(max(sub.data$distkm),(max(sub.data$distkm)*coef(reg)[2]+coef(reg)[1])*1.02,bquote(.(tr('Slope')) == .(round(coef(reg)[2],3)) ~~ R^2 == .(round(summary(reg)$r.squared,2))),pos=2,col='black',cex=1.5)# ,srt=(round(coef(reg)[2],2)*(180*pi))+180 : ne marche que dans une graphique carré, sinon la paralaxe pose problème : de plus il faut des unités ou 1x = 1y car les degrés de rotation sont absolut, et non dépendnat du système de coordonnées || ceci remet à l'horizontal ??? ,srt=atan2(max(sub.data$distkm),(max(sub.data$distkm)*coef(reg)[2]+coef(reg)[1])*1.02)*(pi/180)  || voir https://stat.ethz.ch/pipermail/r-help/2006-February/087559.html
+#         }
+#       }
+#       par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+#       plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses par unité de distance")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+#       legend('top',legend = dateconstats,col=col,pch=20,title=tr('ClockingDate'),horiz=TRUE)
+      
+      #jmax<-max(cv$data$jconstat, na.rm=TRUE)
+      j<-c(0:4)
+      cv$data$jtoplot <- factor(cv$data$jconstat,levels = j)
+      col<-rainbow(length(j))
+      for(i in 1:length(j)){
+        sub.data<-subset(cv$data,jconstat %in% c(j[i]))
+        points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=col[i])
+          if(v$lm==TRUE & nrow(sub.data)>1){
+            reg <- lm(sub.data$speedtoplot~sub.data$distkm)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
+            abline(coef(reg),col=col[i],lwd=2)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
+            abline(coef(reg),col='black',lwd=1,lty=2)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
+            text(max(sub.data$distkm),(max(sub.data$distkm)*coef(reg)[2]+coef(reg)[1])*1.02,bquote(.(tr('Slope')) == .(round(coef(reg)[2],3)) ~~ R^2 == .(round(summary(reg)$r.squared,2))),pos=2,col='black',cex=1.5)# ,srt=(round(coef(reg)[2],2)*(180*pi))+180 : ne marche que dans une graphique carré, sinon la paralaxe pose problème : de plus il faut des unités ou 1x = 1y car les degrés de rotation sont absolut, et non dépendnat du système de coordonnées || ceci remet à l'horizontal ??? ,srt=atan2(max(sub.data$distkm),(max(sub.data$distkm)*coef(reg)[2]+coef(reg)[1])*1.02)*(pi/180)  || voir https://stat.ethz.ch/pipermail/r-help/2006-February/087559.html
+          }
+      }
+      
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de la date de constatation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      legend('top',legend = j+1,col=col,pch=20,title = tr('ClockingDay'),xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
+      
+    }
+    
+#     if(v$distfactors=='date'){#travailler sur les j constats pour avoir toutes les valeurs possibles des dates? : non si la date du j0 n'est pas dans la liste elle ne sera pas trouvée : jconstat permet seulement de jouer sur les couleurs
+#       dateconstats<-sort(factor(unique(cv$data$dateconstat)))
+#       col<-rainbow(length(dateconstats))
+#       for(i in 1:length(dateconstats)){
+#         dc<-as.character(dateconstats[i])
+#         sub.data<-subset(cv$data,dateconstat %in% c(dc))
+#         points(sub.data$distkm,sub.data$speed,pch=20,col=col[i])
+#       }
+#       par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+#       plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses par unité de distance")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+#       legend('top',legend = dateconstats,col=col,pch=20,title=tr('ClockingDate'),horiz=TRUE)
+#     }
+    
+      if(v$distfactors=='duration'){
+        if(v$speedneutral=="y"){
+          dmax<-ceiling(max(cv$data$flightduration, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
+          d<-c(1:dmax)
+          col<-rainbow(dmax)#pas length(d) car on exclu le 0
+          for(i in 1:dmax){#pas length(d) car on exclu le 0
+            sub.data<-subset(cv$data,flightduration <= d[i]*60*60 & flightduration > d[i-1]*60*60)
+            points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=col[i])
+          }
+        } else {
+          dmax<-ceiling(max(cv$data$flightdurationWN, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
+          d<-c(1:dmax)
+          col<-rainbow(dmax)#pas length(d) car on exclu le 0
+          for(i in 1:dmax){#pas length(d) car on exclu le 0
+            sub.data<-subset(cv$data,flightdurationWN <= d[i]*60*60 & flightdurationWN > d[i-1]*60*60)
+            points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=col[i])
+          }
+        }
+
+        par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de durée du vol, en heures")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+        color.legend.labels<-seq(1,dmax,by=4)
+        color.legend.labels<-paste(color.legend.labels,"h",sep='')
+        color.legend(1,1,1.03,0,color.legend.labels,col,gradient="y")
+      }
+    
+#     distkm<-cv$data$distkm
+#     newx <- seq(min(distkm), max(distkm) )#((max(distkm)-min(distkm))/(length(distkm)-1))
+#     prd<-predict(reg,newdata=data.frame(distkm = newx),interval = c("confidence"))
+#     lines(newx,prd[,2],col="red",lty=2)
+#     lines(newx,prd[,3],col="red",lty=2)
+    
+    #http://stackoverflow.com/questions/24173468/r-print-equation-of-linear-regression-on-the-plot-itself
+    #https://stat.ethz.ch/pipermail/r-help/2007-November/146285.html (confidence interval)
+    #http://r-eco-evo.blogspot.be/2011/01/confidence-intervals-for-regression.html
+
+#http://www.r-bloggers.com/heatmap-tables-with-ggplot2/
+#http://stackoverflow.com/questions/22841960/creating-a-calendar-heatmap-for-number-of-events-that-occured-at-a-time-day-of-w
+#http://stackoverflow.com/questions/32119749/recreating-frequency-heatmap-in-r
+
+  
+  }
+})
+  
+output$plotNeutral <- renderPlot({
+  v<-getInputValues()
+  cv<-getComputedValues()
+  
+   par(bty="n",pty="s",oma = c(1, 1, 3, 4),mar=c(1,1,4,1))#pty="s" force le plot à être carré ,oma = c(1, 1, 4, 1),mar=c(4,2,1,1)
+  
+  if(v$races!="empty" & v$editions!="empty"){#reverse y axis : https://stat.ethz.ch/pipermail/r-help/2005-December/084726.html
+    if(v$speedneutral=='y'){
+      plot(cv$data$rank,cv$data$rank,ylim=rev(range(cv$data$rank)),xlab='',ylab='Classement selon les vitesses calculées AVEC neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
+    } else {
+      plot(cv$data$rank,cv$data$rankWN,ylim=rev(range(cv$data$rankWN)),xlab='',ylab='Classement selon les vitesses calculées SANS neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
+    }
+    axis(3)# Draw the x axis
+    axis(2)# Draw the y axis
+    mtext('Classement selon les vitesses calculées AVEC neutralisation', side=3, line=3)#http://stackoverflow.com/questions/12302366/moving-axes-labels-in-r
+    if(v$distfactors=='unselected'){
+      if(v$speedneutral=='y'){
+        points(cv$data$rank,cv$data$rank,pch=20,col='yellow')
+      } else {
+        sub.data<-subset(cv$data,rankDiff < 0)
+        points(sub.data$rank,sub.data$rankWN,pch=20,col='red')
+        
+        sub.data<-subset(cv$data,rankDiff > 0)
+        points(sub.data$rank,sub.data$rankWN,pch=20,col='green')
+        
+        sub.data<-subset(cv$data,rankDiff == 0)
+        points(sub.data$rank,sub.data$rankWN,pch=20,col='yellow')
+      }
+
+      lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+      
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison des classements avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      legend('right',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement',xpd=TRUE)#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
+   }
+    if(v$distfactors=='age'){
+      agemax<-max(cv$data$age, na.rm=TRUE)
+      ages<-c(0:agemax)
+      cv$data$agetoplot <- factor(cv$data$age,levels = ages)
+      col<-rainbow(length(ages))
+      for(i in 1:length(ages)){
+        sub.data<-subset(cv$data,age %in% c(ages[i]))
+        if(v$speedneutral=='y'){
+          points(sub.data$rank,sub.data$rank,pch=20,col=col[i])
+        } else {
+          points(sub.data$rank,sub.data$rankWN,pch=20,col=col[i])
+        }
+      }
+      
+      lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+      
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison des classements avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      legend('right',legend = ages,col=col,pch=20,title = tr('PigeonsAge'),xpd=TRUE)#,inset=c(-0.01,0),,horiz=TRUE
+    }
+
+    if(v$distfactors=='date'){
+      j<-c(0:4)
+      cv$data$jtoplot <- factor(cv$data$jconstat,levels = j)
+      col<-rainbow(length(j))
+      for(i in 1:length(j)){
+        sub.data<-subset(cv$data,jconstat %in% c(j[i]))
+        if(v$speedneutral=='y'){
+          points(sub.data$rank,sub.data$rank,pch=20,col=col[i])
+        } else {
+          points(sub.data$rank,sub.data$rankWN,pch=20,col=col[i])
+        }
+      }
+      
+      lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+      
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison des classements avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      legend('right',legend = j+1,col=col,pch=20,title = tr('ClockingDay'),xpd=TRUE)#,inset=c(-0.01,0),horiz=TRUE
+    }
+
+    if(v$distfactors=='duration'){
+      if(v$speedneutral=="y"){
+        dmax<-ceiling(max(cv$data$flightduration, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
+        d<-c(1:dmax)
+        col<-rainbow(dmax)#pas length(d) car on exclu le 0
+        for(i in 1:dmax){#pas length(d) car on exclu le 0
+          sub.data<-subset(cv$data,flightduration <= d[i]*60*60 & flightduration > d[i-1]*60*60)
+          points(sub.data$rank,sub.data$rank,pch=20,col=col[i])
+        }
+      } else {
+        dmax<-ceiling(max(cv$data$flightdurationWN, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
+        d<-c(1:dmax)
+        col<-rainbow(dmax)#pas length(d) car on exclu le 0
+        for(i in 1:dmax){#pas length(d) car on exclu le 0
+          sub.data<-subset(cv$data,flightdurationWN <= d[i]*60*60 & flightdurationWN > d[i-1]*60*60)
+          points(sub.data$rank,sub.data$rankWN,pch=20,col=col[i])
+        }
+      }
+      
+      lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+      
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison des classements avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      color.legend.labels<-seq(1,dmax,by=4)
+      color.legend.labels<-paste(color.legend.labels,"h",sep='')
+      color.legend(1,0.5,1.03,-0.5,color.legend.labels,col,gradient="y")
+    }
+  }
+})
+
+output$plotPoteau <- renderPlot({
+  v<-getInputValues()
+  cv<-getComputedValues()
+
+  par(bty="n",pty="s",oma = c(1, 1, 3, 4),mar=c(1,1,4,1))#pty="s" force le plot à être carré ,oma = c(1, 1, 4, 1),mar=c(4,2,1,1)
+  
+  if(v$races!="empty" & v$editions!="empty"){#reverse y axis : https://stat.ethz.ch/pipermail/r-help/2005-December/084726.html
+    if(v$speedneutral=='y'){
+      plot(cv$data$catpos,cv$data$rank,ylim=rev(range(cv$data$rank)),xlab='',ylab='Classement selon les vitesses calculées AVEC neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
+    } else {
+      plot(cv$data$catpos,cv$data$rankWN,ylim=rev(range(cv$data$rankWN)),xlab='',ylab='Classement selon les vitesses calculées SANS neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
+    }
+    axis(3)# Draw the x axis
+    axis(2)# Draw the y axis
+    mtext('Classement officiel (vitesses calculées AVEC neutralisation, puis poteau)', side=3, line=3)#http://stackoverflow.com/questions/12302366/moving-axes-labels-in-r
+    if(v$distfactors=='unselected'){
+      if(v$speedneutral=='y'){
+        sub.data<-subset(cv$data,rankDiff < 0)
+        points(sub.data$catpos,sub.data$rank,pch=20,col='red')
+        
+        sub.data<-subset(cv$data,rankDiff > 0)
+        points(sub.data$catpos,sub.data$rank,pch=20,col='green')
+        
+        sub.data<-subset(cv$data,rankDiff == 0)
+        points(sub.data$catpos,sub.data$rank,pch=20,col='yellow')
+      } else {
+        sub.data<-subset(cv$data,rankDiff < 0)
+        points(sub.data$catpos,sub.data$rankWN,pch=20,col='red')
+        
+        sub.data<-subset(cv$data,rankDiff > 0)
+        points(sub.data$catpos,sub.data$rankWN,pch=20,col='green')
+        
+        sub.data<-subset(cv$data,rankDiff == 0)
+        points(sub.data$catpos,sub.data$rankWN,pch=20,col='yellow')
+      }
+      
+      lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+      
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison des classements avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      legend('right',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement',xpd=TRUE)#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
+    }
+    if(v$distfactors=='age'){
+      agemax<-max(cv$data$age, na.rm=TRUE)
+      ages<-c(0:agemax)
+      cv$data$agetoplot <- factor(cv$data$age,levels = ages)
+      col<-rainbow(length(ages))
+      for(i in 1:length(ages)){
+        sub.data<-subset(cv$data,age %in% c(ages[i]))
+        if(v$speedneutral=='y'){
+          points(sub.data$catpos,sub.data$rank,pch=20,col=col[i])
+        } else {
+          points(sub.data$catpos,sub.data$rankWN,pch=20,col=col[i])
+        }
+      }
+      
+      lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+      
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison des classements avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      legend('right',legend = ages,col=col,pch=20,title = tr('PigeonsAge'),xpd=TRUE)#,inset=c(-0.01,0),,horiz=TRUE
+    }
+    
+    if(v$distfactors=='date'){
+      j<-c(0:4)
+      cv$data$jtoplot <- factor(cv$data$jconstat,levels = j)
+      col<-rainbow(length(j))
+      for(i in 1:length(j)){
+        sub.data<-subset(cv$data,jconstat %in% c(j[i]))
+        if(v$speedneutral=='y'){
+          points(sub.data$catpos,sub.data$rank,pch=20,col=col[i])
+        } else {
+          points(sub.data$catpos,sub.data$rankWN,pch=20,col=col[i])
+        }
+      }
+      
+      lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+      
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison des classements avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      legend('right',legend = j+1,col=col,pch=20,title = tr('ClockingDay'),xpd=TRUE)#,inset=c(-0.01,0),horiz=TRUE
+    }
+    
+    if(v$distfactors=='duration'){
+      if(v$speedneutral=="y"){
+        dmax<-ceiling(max(cv$data$flightduration, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
+        d<-c(1:dmax)
+        col<-rainbow(dmax)#pas length(d) car on exclu le 0
+        for(i in 1:dmax){#pas length(d) car on exclu le 0
+          sub.data<-subset(cv$data,flightduration <= d[i]*60*60 & flightduration > d[i-1]*60*60)
+          points(sub.data$catpos,sub.data$rank,pch=20,col=col[i])
+        }
+      } else {
+        dmax<-ceiling(max(cv$data$flightdurationWN, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
+        d<-c(1:dmax)
+        col<-rainbow(dmax)#pas length(d) car on exclu le 0
+        for(i in 1:dmax){#pas length(d) car on exclu le 0
+          sub.data<-subset(cv$data,flightdurationWN <= d[i]*60*60 & flightdurationWN > d[i-1]*60*60)
+          points(sub.data$catpos,sub.data$rankWN,pch=20,col=col[i])
+        }
+      }
+      
+      lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+      
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison des classements avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      color.legend.labels<-seq(1,dmax,by=4)
+      color.legend.labels<-paste(color.legend.labels,"h",sep='')
+      color.legend(1,0.5,1.03,-0.5,color.legend.labels,col,gradient="y")
+    }
+  }
+})
+
   output$Datas = renderDataTable({
     v<-getInputValues()
     cv<-getComputedValues()
-    cv$data
+    cv$datatoshow
   })
 
 
@@ -135,9 +657,14 @@ output$uiSBlanguage<- renderUI({
   strong(HTML(paste(tr("Language"),":",sep=" ")))
 })
 
+output$uiSBRacesTitle <- renderUI({
+  h4(paste(tr("Selectarace"),":",sep=" "))
+})
+
 output$uiSBRaces <- renderUI({
   strong(HTML(paste(tr("Races"),"*",":",sep=" ")))
 })
+
 output$uiSBRacesLocLink <- renderUI({
   HTML(paste("*",":",tr("RacesLocLink"),sep=" "))
 })
@@ -145,11 +672,32 @@ output$uiSBRacesEditions <- renderUI({
   strong(HTML(paste(tr("Editions"),":",sep=" ")))
 })
 
+output$uiSBGeneralSettingsTitle <- renderUI({
+  h4(paste(tr("GeneralSettings"),":",sep=" "))
+})
+
+output$uiSBAdditionalSettingsTitle <- renderUI({
+  h4(paste(tr("AdditionalSettings"),":",sep=" "))
+})
+
+output$uiSBPigeonsSpeed <- renderUI({
+  fluidRow(column(12,
+                  h5(HTML(paste(tr("PigeonsSpeed"),":",sep=" "))),
+                  selectInput("speedneutral", label=HTML(paste(tr("CalculatedWithNeutral")," :",sep="")), choices=getYesNoSelection(),selected="auto",selectize=FALSE),
+                  selectInput("speedloosegain", label=HTML(paste(tr("800mmIncluded")," :",sep="")), choices=getYesNoSelection(),selected="auto",selectize=FALSE),
+                  selectInput("speedscale", label=HTML(paste(tr("Scale")," :",sep="")), choices=getSpeedScaleSelection(),selected="auto",selectize=FALSE),
+                  conditionalPanel(
+                    condition = "input.speedscale == 'man'",
+                    sliderInput("speed", label = "", min = 200, max = 2200, step=50, value = c(600, 1200))
+                  )
+  ))
+})
+
 output$uiSBsummary <- renderUI({
   mainPanel(
     # Faire des requêtes sur tous les concours de même id et donner stats générales dès que concours est sélectionné
     # Second bloc : stats générales de cette édition
-    HTML(),
+    #HTML()
   )
 })
 
@@ -157,23 +705,60 @@ output$uiSBlicence <- renderUI({
   HTML(paste("<a rel='license' href='http://creativecommons.org/licenses/by/2.0/be/'><img alt='Licence Creative Commons' style='border-width:0' src='img/cc_by_80x15.png' /></a>&nbsp;",tr("LicenceSeeCredits"),sep=""))
 })
 
+output$uiSBDistFact <- renderUI({
+  strong(HTML(paste(tr("Highlightfactors"),":",sep=" ")))
+})
+
+output$uiSBFlightLinesHours <- renderUI({
+  HTML(tr("ShowHourLines"))
+})
+
+output$uiSBLmLines <- renderUI({
+  HTML(tr("ShowLm"))
+})
+
+
+
 output$uiMain <- renderUI({
   tabsetPanel(id="Tabset",selected=1,
               tabPanel(
-                tr("Statistics"),
-                plotOutput("plot",height=700),#,height = "auto"
+                tr("Summary"),
+                plotOutput("plotSummary",height=700),#,height = "auto" ,height=700
                 value=1
               ),
+              #conditionalPanel(condition = "input.editions!='empty'",
+              tabPanel(
+                tr("CatAndAge"),
+                plotOutput("plotCatAndAge",height=700),#,height = "auto"
+                value=2
+              ),
+              tabPanel(
+                tr("Distance"),
+                plotOutput("plotDistance",height=700),
+                value=3
+              #)
+              ),
+              tabPanel(
+                'Poteau',
+                plotOutput("plotPoteau",height=700),
+                value=6
+              ),
+              tabPanel(
+                'Neutralisation',
+                plotOutput("plotNeutral",height=700),
+                value=7
+              ),
+              
               tabPanel(
                 tr("Datas"),
                 dataTableOutput('Datas'),
-                value=2
+                value=4
               ),
               tabPanel(
                 tr("Help"),
                 h4(paste(tr("TechnicalInformations"),":",sep=" ")),
                 p(HTML(tr("SessionCounter")," :",SRV$count)),
-                value=3
+                value=5
               )
   )
 })

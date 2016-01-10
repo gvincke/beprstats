@@ -24,20 +24,39 @@ shinyUI(navbarPage("Belgium Pigeon Racing Statistics",id="main",#http://shiny.rs
   tags$head(
     tags$head(includeScript("www/js/google-analytics.js")),
     tags$script(type="text/javascript",src="js/scripts.js"),
-    tags$style(type='text/css', "select#races,select#editions { width: 150px; display : inline; }"),
+    tags$style(type='text/css', "select#races,select#editions, select#speedscale { width: 150px; display : inline; }"),
+    tags$style(type='text/css', "select#distfactors { width: 125px; display : inline; }"),
+    tags$style(type='text/css', "select#speedneutral ,select#speedloosegain { width: 50px; display : inline; }"),
     tags$style(type="text/css", "h1,h2,h3,h4,h5,h6 {color:#317EAC;}"),
     tags$style(type="text/css", "label, div.shiny-input-container div { display: inline; }"),
+    tags$style(type="text/css", ".shiny-input-container {margin-bottom:5px;margin-top:5px; line-height:15px;}"),
     tags$style(type="text/css", "hr {margin-bottom:8px; margin-top:8px;}"),
     tags$style(type='text/css', "select#language { width: 150px; display : inline; }"),
-    tags$style(type="text/css", "#lang-div {z-index:1000;position:absolute;top:5px;right:130px;}")
+    tags$style(type="text/css", "#lang-div {z-index:1000;position:absolute;top:5px;right:130px;}"),
+    tags$style(type="text/css", '.checkbox,.radio { float: none; display:inline; margin-top:5px; margin-bottom:5px;line-height:15px;}')
   ),
   fluidRow(
     column(3,
       wellPanel(
+        uiOutput("uiSBRacesTitle"),
         selectInput(inputId="races",label=uiOutput("uiSBRaces"),choices="",selectize=FALSE,multiple=FALSE),#Label is translated, so have to be set in server.R, but the list must be set in UI.R to be setted before of server.R computation to be filled by Towns values : soit un select est défini ici avec choices ="" et un observe dans server.R le rempli par après; soit le select est directement défini dans server.R mais du coup ne peut être exploité par un script js
         selectInput(inputId="editions",label=uiOutput("uiSBRacesEditions"),choices="",selectize=FALSE,multiple=FALSE),#Label is translated, so have to be set in server.R, but the list must be set in UI.R to be setted before of server.R computation to be filled by Towns values : soit un select est défini ici avec choices ="" et un observe dans server.R le rempli par après; soit le select est directement défini dans server.R mais du coup ne peut être exploité par un script js
-        hr(),
-        uiOutput("uiSBRacesLocLink")        
+        uiOutput("uiSBRacesLocLink")
+      ),
+      wellPanel(
+        uiOutput("uiSBGeneralSettingsTitle"),
+        uiOutput("uiSBPigeonsSpeed")
+      ),
+    conditionalPanel(condition = "input.Tabset==3 | input.Tabset==6 | input.Tabset==7",
+      wellPanel(
+        uiOutput("uiSBAdditionalSettingsTitle"),
+        selectInput("distfactors", label=uiOutput("uiSBDistFact"), choices="",selectize=FALSE),
+        checkboxInput("flh", label =uiOutput("uiSBFlightLinesHours"), value = FALSE),
+        checkboxInput("neut", label ='Afficher les zones de neutralisation', value = FALSE),
+        conditionalPanel(condition = "input.distfactors=='date' | input.distfactors=='unselected'",
+        checkboxInput("lm", label =uiOutput("uiSBLmLines"), value = FALSE)
+        )
+        )
       ),
       fluidRow(
         column(12,

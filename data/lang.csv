@@ -21,9 +21,31 @@ OtherApps	Autres applications	Other apps	Andere apps
 
 December	Décembre	December	December
 PigeonsSpeed	Vitesse des pigeons en m/min	Speed of pigeons in m/min	Snelheid van duiven in m/min
+Speed	Vitesse	Speed	Snelheid
 Races	Concours	Races	Races
 RacesLocLink	Voir <a href='http://www.yapluka.be/sapps/beprmap/' target='_blank'>Belgium Pigeon racing Map</a> pour leur localisation	See <a href='http://www.yapluka.be/sapps/beprmap/' target='_blank'>Belgium Pigeon racing Map</a> to locate 	Zie <a href='http://www.yapluka.be/sapps/beprmap/' target='_blank'>Belgium Pigeon racing Map</a> te lokaliseren
 Editions	Editions	Editions	Edities
 Youngsters	Jeunes	Youngters	Jonge
 Yearlings	Yearlings	Yearlings	Jaarse
 Olds	Vieux	Olds	Oude
+Scale	Echelle	Scale	Schaal
+Selectarace	Sélectionnez un concours	Select a race	Selecteer een race
+Settings	Paramètres	Settings	Instellingen
+GeneralSettings	Paramètres généraux	General settings	Algemene instellingen
+AdditionalSettings	Paramètres complémentaires	Additional settings	Extra instellingen
+Distance	Distance	Distance	Afstand
+Age	Age	Age	Leeftijd
+Date	Date	Date	Datum
+CatAndAge	Catégories et âge	Categories and age	Categorieën en leeftijd
+Highlightfactors	Mettre en évidence les facteurs	Factors to highlight	Factoren aan hoogtepunt
+PigeonsAge	Age des pigeons (années)	Age of pigeons (years)	Leeftijd van duiven (jaren)
+ClockingDate	Date de constatation	Date of clocking	Datum van klokken
+ClockingDay	Jour de constatation	Day of clocking	Dag van klokken
+FlightDurationH	Durée du vol (heures)	Flight duration (hours)	Vluchtduur (uur)
+Summary	Résumé	Summary	Overzicht
+PleaseSelectEdition	Merci de sélectionner la date de l'édition de ce concours	Please select the date of this race	Selecteert u de datum van deze race alsjeblieft
+ShowHourLines	Afficher les lignes des heures de vol	Show lines of flight hours 	Toon lijnen vlieguren
+ShowLm	Tracer la ou les ligne(s) de régression linéaire	Plot linear regression line(s)	Plot lineaire regressielijn(en)
+Slope	Pente	Slope	Helling
+CalculatedWithNeutral	Calculée avec les neutralisations	Calculated with neutralizations	Berekend neutralisaties
+800mmIncluded	Valeurs inférieures à 800m/min comprises	Including values below 800 m/min	Waaronder waarden beneden 800 m/min
