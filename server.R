@@ -153,6 +153,8 @@ shinyServer(function(input, output, session) {
     cv$data$rank<-rank(-cv$data$speed,na.last='NA',ties.method='min')
     cv$data$rankWN<-rank(-cv$data$speedWN,na.last='NA',ties.method='min')
     cv$data$rankDiff<-cv$data$rank-cv$data$rankWN
+    cv$data$catposrankDiff<-cv$data$catpos-cv$data$rank
+    cv$data$catposrankWNDiff<-cv$data$catpos-cv$data$rankWN
     cv$data$racedate <- factor(cv$data$racedate)#http://stackoverflow.com/questions/1195826/drop-factor-levels-in-a-subsetted-data-frame
     cv$data$distkm<-cv$data$dist/1000
     cv$datatoshow<-subset(cv$data,select=c(ring,age,owner,location,racename,racedate,cat,catpos,ownerpos,dist,time,speed,speedkmh,rank,rankWN,rankDiff))
@@ -544,22 +546,22 @@ output$plotPoteau <- renderPlot({
     mtext('Classement officiel (vitesses calculées AVEC neutralisation, puis poteau)', side=3, line=3)#http://stackoverflow.com/questions/12302366/moving-axes-labels-in-r
     if(v$distfactors=='unselected'){
       if(v$speedneutral=='y'){
-        sub.data<-subset(cv$data,rankDiff < 0)
+        sub.data<-subset(cv$data,catposrankDiff < 0)
         points(sub.data$catpos,sub.data$rank,pch=20,col='red')
         
-        sub.data<-subset(cv$data,rankDiff > 0)
+        sub.data<-subset(cv$data,catposrankDiff > 0)
         points(sub.data$catpos,sub.data$rank,pch=20,col='green')
         
-        sub.data<-subset(cv$data,rankDiff == 0)
+        sub.data<-subset(cv$data,catposrankDiff == 0)
         points(sub.data$catpos,sub.data$rank,pch=20,col='yellow')
       } else {
-        sub.data<-subset(cv$data,rankDiff < 0)
+        sub.data<-subset(cv$data,catposrankWNDiff < 0)
         points(sub.data$catpos,sub.data$rankWN,pch=20,col='red')
         
-        sub.data<-subset(cv$data,rankDiff > 0)
+        sub.data<-subset(cv$data,catposrankWNDiff > 0)
         points(sub.data$catpos,sub.data$rankWN,pch=20,col='green')
         
-        sub.data<-subset(cv$data,rankDiff == 0)
+        sub.data<-subset(cv$data,catposrankWNDiff == 0)
         points(sub.data$catpos,sub.data$rankWN,pch=20,col='yellow')
       }
       
