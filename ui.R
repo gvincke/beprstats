@@ -51,12 +51,14 @@ shinyUI(navbarPage("Belgium Pigeon Racing Statistics",id="main",#http://shiny.rs
       wellPanel(
         uiOutput("uiSBAdditionalSettingsTitle"),
         selectInput("distfactors", label=uiOutput("uiSBDistFact"), choices="",selectize=FALSE),
-        checkboxInput("flh", label =uiOutput("uiSBFlightLinesHours"), value = FALSE),
-        checkboxInput("neut", label ='Afficher les zones de neutralisation', value = FALSE),
-        conditionalPanel(condition = "input.distfactors=='date' | input.distfactors=='unselected'",
-        checkboxInput("lm", label =uiOutput("uiSBLmLines"), value = FALSE)
+        conditionalPanel(condition = "input.Tabset==3",
+          checkboxInput("flh", label =uiOutput("uiSBFlightLinesHours"), value = FALSE),
+          checkboxInput("neut", label ='Afficher les zones de neutralisation', value = FALSE),
+          conditionalPanel(condition = "input.distfactors=='date' | input.distfactors=='unselected'",
+            checkboxInput("lm", label =uiOutput("uiSBLmLines"), value = FALSE)
+          )
         )
-        )
+      )
       ),
       fluidRow(
         column(12,
