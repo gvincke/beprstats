@@ -1,6 +1,8 @@
 key	fr	en	nl
 age	Age des pigeons (années)	Age of pigeons (years)	Leeftijd van duiven (jaren)
 date	Jour de constatation	Day of clocking	Dag van klokken
-duration	Durée du vol	Flight duration	Vluchtduur
+duration	Durée du vol (heures)	Flight duration (hours)	Vluchtduur (uur)
+neutral	Constatation durant une neutralisation	Clocking during neutralization	Klokken tijdens de neutralisatie
+gainorloose	Gain ou perte	Gain or loose	Winst of verlies
 country	Pays	Country	Land
 sex	Sexe	Sex	Geslacht

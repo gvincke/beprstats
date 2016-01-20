@@ -36,6 +36,7 @@ AdditionalSettings	Paramètres complémentaires	Additional settings	Extra instel
 Distance	Distance	Distance	Afstand
 Age	Age	Age	Leeftijd
 Date	Date	Date	Datum
+Category	Catégorie	Category	Categorie
 CatAndAge	Catégories et âge	Categories and age	Categorieën en leeftijd
 Highlightfactors	Mettre en évidence les facteurs	Factors to highlight	Factoren aan hoogtepunt
 PigeonsAge	Age des pigeons (années)	Age of pigeons (years)	Leeftijd van duiven (jaren)
@@ -49,3 +50,4 @@ ShowLm	Tracer la ou les ligne(s) de régression linéaire	Plot linear regression
 Slope	Pente	Slope	Helling
 CalculatedWithNeutral	Calculée avec les neutralisations	Calculated with neutralizations	Berekend neutralisaties
 800mmIncluded	Valeurs inférieures à 800m/min comprises	Including values below 800 m/min	Waaronder waarden beneden 800 m/min
+GainOrLoose	Gain ou perte	Gain or loose	Winst of verlies
