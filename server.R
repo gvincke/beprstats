@@ -37,6 +37,8 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 # Expliquer en quoi c'est difficile de post-traiter : faudrais : coordonnées lieux du lâcher, coordonnées des amateurs, datetime de la constatation et pas que time, heures de neutralisation, et TOUS les résultats, pas que ceux classés, sexe de tous les pigeons, age de tous les pigeons, pays de tous les pigeons
 # Gain et Pertes : faire for i dans les catégories existantes et afficher autant de plot que de catégorie
 # Pour chaque facteur de variation dans le plot distance associer un plot de comptage des nombres par critères avec une répatition 3/4 1/4 conditionnelles (Afficher les nombres par catégorie)
+# Hypothese Philippens : poteau = pour réduire impact de la distance en dessous de 800m/min donc identifier dans le plot de distance l'effet du poteau, avec en rouge ceux qui perdent des places et en vert ceux qui en gagnent. Normalement sous le poteau je devrais trouver du vert, et au delà du rouge ...
+# Femelles : sexe = 0 pour sexe inconnu, et >0 = rank dans le doublage femelle ? (oui mais s'il y a plusieurs doublages ?)
 
 shinyServer(function(input, output, session) {
   # https://gist.github.com/trestletech/9926129
@@ -454,6 +456,23 @@ output$plotDistance <- renderPlot({
     legend('top',legend = c('Non','Oui'),col=col,pch=20,title = 'Constatation durant une neutralisation',xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
     
   }
+
+  if(v$distfactors=='gainorloose'){
+  
+      sub.data<-subset(cv$data,catposrankDiff < 0)
+      points(sub.data$distkm,sub.data$speedtoplot,pch=20,col='red')
+      
+      sub.data<-subset(cv$data,catposrankDiff > 0)
+      points(sub.data$distkm,sub.data$speedtoplot,pch=20,col='green')
+      
+      sub.data<-subset(cv$data,catposrankDiff == 0)
+      points(sub.data$distkm,sub.data$speedtoplot,pch=20,col='yellow')
+  
+    par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+    plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Distribution des vitesses en fonction de l'impact des gains et pertes en dessous de 800m/min")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+    legend('right',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement',xpd=TRUE)#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
+    
+  }
 })
   
 output$plotNeutral <- renderPlot({
@@ -559,6 +578,7 @@ output$plotNeutral <- renderPlot({
       color.legend.labels<-paste(color.legend.labels,"h",sep='')
       color.legend(1,0.5,1.03,-0.5,color.legend.labels,col,gradient="y")
     }
+    
   }
 })
 
