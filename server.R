@@ -26,7 +26,7 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 # Ajouter legendes et titres et explications dans neutralisation et poteau
 # Ajouter les nombres bruts aux barplots : pour ça il faut avoir créé liste des concours avec leur caractéristiques (neutralisations, nombre de pigeons par catégories, etc)
 # Réfléchir a montrer les changement de classement (combien de pigeons changent de position sans neutralisations)
-# Créer classement général
+# Créer classement général : avec ou sans poteau !!!!! (classement vitesse puis par date+heure de constatation !!)
 # Compter combien de victoires générale par age et catégorie et le mettre dans le summary
 # Summary adapter le template grace aux colonnes et mettre des boites de texte à droite des plots
 # Calculer un classement ou tout le monde est considéré comme au poteau, et comparer avec autres modes de classements en calculant le % de pigeons qui changent de place
@@ -37,8 +37,14 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 # Expliquer en quoi c'est difficile de post-traiter : faudrais : coordonnées lieux du lâcher, coordonnées des amateurs, datetime de la constatation et pas que time, heures de neutralisation, et TOUS les résultats, pas que ceux classés, sexe de tous les pigeons, age de tous les pigeons, pays de tous les pigeons
 # Gain et Pertes : faire for i dans les catégories existantes et afficher autant de plot que de catégorie
 # Pour chaque facteur de variation dans le plot distance associer un plot de comptage des nombres par critères avec une répatition 3/4 1/4 conditionnelles (Afficher les nombres par catégorie)
-# Hypothese Philippens : poteau = pour réduire impact de la distance en dessous de 800m/min donc identifier dans le plot de distance l'effet du poteau, avec en rouge ceux qui perdent des places et en vert ceux qui en gagnent. Normalement sous le poteau je devrais trouver du vert, et au delà du rouge ...
 # Femelles : sexe = 0 pour sexe inconnu, et >0 = rank dans le doublage femelle ? (oui mais s'il y a plusieurs doublages ?)
+# Titres des graphiques en varaible puis paste pour le complément (plotDistance par exemple)
+# Barcelone 2010 et 2009 : vérifier que les deux premiers ne sont pas avec ds vitesses calculées trop grandes du a un jours de ocntatation erronée, car sortent du poteau !!
+# résultats nationaux Belgique :  toutes les femelles sont doublées car c'est gratuit : compéraison des sexes est alors possible !
+
+#Done :
+# Hypothese Philippens : poteau = pour réduire impact de la distance en dessous de 800m/min donc identifier dans le plot de distance l'effet du poteau, avec en rouge ceux qui perdent des places et en vert ceux qui en gagnent. Normalement sous le poteau je devrais trouver du vert, et au delà du rouge ... Confirmé par Sébastien casaerts et par le CFW : 800m/min est la vitesse minimale de vol du pigeon. Donc en dessous de cette vitesse il s'est OBLIGATOIREMENT arrété, et le but du poteau est de limiter cet impact d'un arrêt, qui est d'autant plus grand que la distance est longue
+
 
 shinyServer(function(input, output, session) {
   # https://gist.github.com/trestletech/9926129
@@ -98,13 +104,12 @@ shinyServer(function(input, output, session) {
   }
   
   #races results
+  races <- read.csv("data/races.csv", sep=",", dec=".")
   # Create a solution of read import and merge several csv files = more efficient : http://www.r-bloggers.com/merging-multiple-data-files-into-one-data-frame/
   # Question : mieux vaut il crer une grosse DB d'abord, et réduire les données ensuite, ou d'abord récolter les infos, faire les choix, et créer la db nécéssaire à la volée ?
-  results <- read.csv("data/results.csv", sep=",", dec=".")
-  results$speedkmh<-(results$speed/1000)*60
   
   observe({#http://stackoverflow.com/questions/28119964/dynamic-input-selector-based-on-uploaded-data
-    v<-sort(as.vector(unique(results$racename))) 
+    v<-sort(as.vector(unique(races$name))) 
     v<-c(" "="empty",v)
     updateSelectInput(#http://www.inside-r.org/packages/cran/shiny/docs/updateSelectInput
       session,
@@ -114,9 +119,8 @@ shinyServer(function(input, output, session) {
   
   
   observe({#http://stackoverflow.com/questions/28119964/dynamic-input-selector-based-on-uploaded-data
-    data<-results
-    data<-subset(data,racename %in% c(input$races))
-    v<-sort(as.vector(unique(data$racedate))) 
+    race<-subset(races,name %in% c(input$races))
+    v<-sort(as.vector(unique(race$date))) 
     v<-c(" "="empty",v)
     updateSelectInput(#http://www.inside-r.org/packages/cran/shiny/docs/updateSelectInput
       session,
@@ -147,6 +151,20 @@ shinyServer(function(input, output, session) {
   getComputedValues<-reactive({
     v<-getInputValues() # get all values of input list
     cv<-list()#created empty computed values list
+    
+    races<-subset(races,name %in% v$races)
+    files<-list("empty.csv")
+    #results <- read.csv("data/results.csv", sep=",", dec=".")
+    if(v$races!="empty" & v$editions== "empty"){
+      files <- list.files(path = "./data/results",pattern = paste("*-",races$id,races$ned,"-[[:digit:]]{1}.csv",sep=""))
+    }
+    if(v$races!="empty" & v$editions != "empty") {
+      files <- list.files(path = "./data/results",pattern = paste(v$editions,"-",races$id,races$ned,"-[[:digit:]]{1}.csv",sep=""))
+    }
+    # First apply read.csv, then rbind
+    results <- do.call(rbind, lapply(files, function(x) read.csv(paste(".","data","results",x,sep="/"), sep=",", dec=".")))
+    results$speedkmh<-(results$speed/1000)*60
+    
     cv$data<-results
     cv$dataS<-results#pour le summary
     if(v$races!="empty"){
@@ -448,7 +466,7 @@ output$plotDistance <- renderPlot({
   if(v$distfactors=='neutral'){
     col<-c('gray90','red')
     for(i in c(0,1)){
-      sub.data<-subset(cv$data,inneutral == as.factor(i))
+      sub.data<-subset(cv$data,inneutral == as.factor(i))#inneutral = 0 ou 1 selon que l'heure de constatation est dans la neutralisation ou pas
       points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=col[i+1])
     }
     par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
@@ -460,10 +478,10 @@ output$plotDistance <- renderPlot({
   if(v$distfactors=='gainorloose'){
   
       sub.data<-subset(cv$data,catposrankDiff < 0)
-      points(sub.data$distkm,sub.data$speedtoplot,pch=20,col='red')
+      points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=paste('red',ceiling(sub.data$catposrankDiff/(min(sub.data$catposrankDiff)/4)),sep=""))#Il y a 4 niveaux de couleur red plus cest foncé plus la différence de classement est grande
       
       sub.data<-subset(cv$data,catposrankDiff > 0)
-      points(sub.data$distkm,sub.data$speedtoplot,pch=20,col='green')
+      points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=paste('green',ceiling(sub.data$catposrankDiff/(max(sub.data$catposrankDiff)/4)),sep=""))#Il y a 4 niveaux de couleur green plus cest foncé plus la différence de classement est grande
       
       sub.data<-subset(cv$data,catposrankDiff == 0)
       points(sub.data$distkm,sub.data$speedtoplot,pch=20,col='yellow')
