@@ -156,12 +156,13 @@ shinyServer(function(input, output, session) {
     races<-subset(races,name %in% v$races)
     files<-list("empty.csv")
     #results <- read.csv("data/results.csv", sep=",", dec=".")
-    if(v$races!="empty" & v$editions== "empty"){
+    # Import all editions of this race to allow summary to be active
+    if(v$races!="empty" ){#& v$editions== "empty"
       files <- list.files(path = "./data/results",pattern = paste("*-",races$id,"-[[:digit:]]{1}.csv",sep=""))
     }
-    if(v$races!="empty" & v$editions != "empty") {
-      files <- list.files(path = "./data/results",pattern = paste(v$editions,"-",races$id,"-[[:digit:]]{1}.csv",sep=""))
-    }
+#     if(v$races!="empty" & v$editions != "empty") {
+#       files <- list.files(path = "./data/results",pattern = paste(v$editions,"-",races$id,"-[[:digit:]]{1}.csv",sep=""))
+#     }
     # First apply read.csv, then rbind
     results <- do.call(rbind, lapply(files, function(x) read.csv(paste(".","data","results",x,sep="/"), sep=",", dec=".")))
     results$speedkmh<-(results$speed/1000)*60
