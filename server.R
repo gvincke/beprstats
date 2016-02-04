@@ -156,10 +156,10 @@ shinyServer(function(input, output, session) {
     files<-list("empty.csv")
     #results <- read.csv("data/results.csv", sep=",", dec=".")
     if(v$races!="empty" & v$editions== "empty"){
-      files <- list.files(path = "./data/results",pattern = paste("*-",races$id,races$ned,"-[[:digit:]]{1}.csv",sep=""))
+      files <- list.files(path = "./data/results",pattern = paste("*-",races$id,"-[[:digit:]]{1}.csv",sep=""))
     }
     if(v$races!="empty" & v$editions != "empty") {
-      files <- list.files(path = "./data/results",pattern = paste(v$editions,"-",races$id,races$ned,"-[[:digit:]]{1}.csv",sep=""))
+      files <- list.files(path = "./data/results",pattern = paste(v$editions,"-",races$id,"-[[:digit:]]{1}.csv",sep=""))
     }
     # First apply read.csv, then rbind
     results <- do.call(rbind, lapply(files, function(x) read.csv(paste(".","data","results",x,sep="/"), sep=",", dec=".")))
