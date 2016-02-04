@@ -44,7 +44,8 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 
 #Done :
 # Hypothese Philippens : poteau = pour réduire impact de la distance en dessous de 800m/min donc identifier dans le plot de distance l'effet du poteau, avec en rouge ceux qui perdent des places et en vert ceux qui en gagnent. Normalement sous le poteau je devrais trouver du vert, et au delà du rouge ... Confirmé par Sébastien casaerts et par le CFW : 800m/min est la vitesse minimale de vol du pigeon. Donc en dessous de cette vitesse il s'est OBLIGATOIREMENT arrété, et le but du poteau est de limiter cet impact d'un arrêt, qui est d'autant plus grand que la distance est longue
-
+# Créer liste des concours avec leur caractéristiques (neutralisations, nombre de pigeons par catégories, etc)
+# CSV : import fichier par fichier APRES selection de la course et de l'édition
 
 shinyServer(function(input, output, session) {
   # https://gist.github.com/trestletech/9926129
