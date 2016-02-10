@@ -18,6 +18,9 @@ library(shiny)
 library(plotrix)#legend.color
 library(png)
 
+# options(shiny.trace=TRUE)
+# options(shiny.error = browser)
+
 # Create a reactive object here that we can share between all the sessions.
 SRV <- reactiveValues(count=0)#Session reactive values
 cc <- readPNG("www/img/cc_by_320x60.png")
@@ -208,21 +211,38 @@ shinyServer(function(input, output, session) {
     v<-getInputValues()
     cv<-getComputedValues()
     if(v$races!="empty"){
-      m<-matrix(c(1,1,2),3,1,byrow=TRUE)
+      m<-matrix(c(1,2),2,1,byrow=TRUE)#matrix(c(1,1,2),3,1,byrow=TRUE)
       layout(m,width=c(1,1))
       #Nombre total d'engagés par édition, par catégorie
       #Podium du nombre de victoires totales par catégories, et par age
       par(bty="n")
       if(v$speedscale=='man'){
-        boxplot(speedtoplot~racedate,data=cv$dataS, col=rainbow(length(unique(cv$dataS$racedate))),range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="Dates",main="Distribution des vitesses par édition",xaxt="n")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+        boxplot(speedtoplot~racedate,data=cv$dataS, col='green',range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="Dates",main="Distribution des vitesses par édition",xaxt="n")# col=rainbow(length(unique(cv$dataS$racedate))),ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
       } else {
-        boxplot(speedtoplot~racedate,data=cv$dataS, col=rainbow(length(unique(cv$dataS$racedate))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Dates",main="Distribution des vitesses par édition",xaxt="n")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+        boxplot(speedtoplot~racedate,data=cv$dataS, col='green',range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Dates",main="Distribution des vitesses par édition",xaxt="n")# col=rainbow(length(unique(cv$dataS$racedate))),ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
       }
-      axis(1, at=1:length(unique(cv$dataS$racedate)), labels=unique(cv$dataS$racedate),las = 2, cex.axis = 0.8)
+      axis(1, at=1:length(unique(cv$dataS$racedate)), labels=unique(cv$dataS$racedate), cex.axis = 0.8)#las = 2,
       
-      n <- table(factor(cv$dataS$racedate))
-      bp<-barplot(n, xlab=" ",xaxt="n",ylab="Nombre de pigeons",main="Nombre total de pigeons",col=rainbow(length(unique(cv$dataS$racedate))),ylim=c(0,roundUpNice(max(n))))
-      text(x = bp, y = n, label = n, pos = 3, cex = 0.8, col = "red")## Add text at top of bars
+      # Solution : obtenir les valeurs, recréer une DB avec sructure et list puis as.matrix comme dans http://www.theanalysisfactor.com/r-11-bar-charts/ exemple datass<-structure(list(c(20,25),c(18,20),c(25,30)), .Names=c("a","b","c"), class = "data.frame", row.names=c(NA,-2L)) puis barplot(as.matrix(datass)) 
+      n<-list()
+      races <- read.csv("data/races.csv", sep=",", dec=".")
+      dates<-as.vector(unique(factor(races[races$name==v$races, "date"])))
+      for(d in dates){
+        #catnb
+        N0<-races[races$date == d & races$name==v$races, "cn0"]
+        N1<-races[races$date == d & races$name==v$races, "cn1"]
+        N2<-races[races$date == d & races$name==v$races, "cn2"]
+        #Calculer le nombre de clasés car ce n'est pas toujours mentionné ni standard.
+        n0<-length(cv$dataS[cv$dataS$racedate == d & cv$dataS$racename==v$races & cv$dataS$cat =="0","speed"])
+        n1<-length(cv$dataS[cv$dataS$racedate == d & cv$dataS$racename==v$races & cv$dataS$cat =="1","speed"])
+        n2<-length(cv$dataS[cv$dataS$racedate == d & cv$dataS$racename==v$races & cv$dataS$cat =="2","speed"])
+        n[[d]]<-c((N0+N1+N2)-(n0+n1+n2),n0+n1+n2)
+      }
+      m<-as.matrix(structure(n, class = "data.frame", .Names=dates, row.names=c(NA,-2L)))
+      bp<-barplot(m, xlab="Dates",ylab="Nombre de pigeons",main="Nombre total de pigeons",col=c('blue','green'),ylim=c(0,roundUpNice(max(m))),names=dates)#col=rainbow(length(unique(dates)))
+      text(x = bp, y = m[1,]+m[2,], label = m[1,]+m[2,], pos = 3, cex = 0.8, col = "red")## Add text at top of bars
+      text(x = bp, y = m[1,]+(m[2,]/2), label = m[2,], cex = 0.8, col = "blue")## Add text at top of bars
+      text(x = bp, y = m[1,]/2, label = m[1,], cex = 0.8, col = "green")## Add text at top of bars
     }
   })
   
