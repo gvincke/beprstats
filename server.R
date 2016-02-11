@@ -221,7 +221,7 @@ shinyServer(function(input, output, session) {
       } else {
         boxplot(speedtoplot~racedate,data=cv$dataS, col='green',range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Dates",main="Distribution des vitesses par édition",xaxt="n")# col=rainbow(length(unique(cv$dataS$racedate))),ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
       }
-      axis(1, at=1:length(unique(cv$dataS$racedate)), labels=unique(cv$dataS$racedate), cex.axis = 0.8)#las = 2,
+      axis(1, at=1:length(unique(cv$dataS$racedate)), labels=unique(cv$dataS$racedate))#las = 2,, cex.axis = 0.8
       
       # Solution : obtenir les valeurs, recréer une DB avec sructure et list puis as.matrix comme dans http://www.theanalysisfactor.com/r-11-bar-charts/ exemple datass<-structure(list(c(20,25),c(18,20),c(25,30)), .Names=c("a","b","c"), class = "data.frame", row.names=c(NA,-2L)) puis barplot(as.matrix(datass)) 
       n<-list()
@@ -239,10 +239,12 @@ shinyServer(function(input, output, session) {
         n[[d]]<-c((N0+N1+N2)-(n0+n1+n2),n0+n1+n2)
       }
       m<-as.matrix(structure(n, class = "data.frame", .Names=dates, row.names=c(NA,-2L)))
-      bp<-barplot(m, xlab="Dates",ylab="Nombre de pigeons",main="Nombre total de pigeons",col=c('blue','green'),ylim=c(0,roundUpNice(max(m))),names=dates)#col=rainbow(length(unique(dates)))
+      bp<-barplot(m, xlab="Dates",ylab="Nombre de pigeons",main="Nombre total de pigeons",col=c('gray','green'),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))),names=dates)#col=rainbow(length(unique(dates)))
+      #points(x = bp, y = (m[1,]+m[2,])+(m[2,]*0.5),col='red')
       text(x = bp, y = m[1,]+m[2,], label = m[1,]+m[2,], pos = 3, cex = 0.8, col = "red")## Add text at top of bars
-      text(x = bp, y = m[1,]+(m[2,]/2), label = m[2,], cex = 0.8, col = "blue")## Add text at top of bars
-      text(x = bp, y = m[1,]/2, label = m[1,], cex = 0.8, col = "green")## Add text at top of bars
+      text(x = bp, y = m[1,]+(m[2,]/2), label = m[2,], cex = 0.8, col = "black")## Add text at top of bars
+      text(x = bp, y = m[1,]/2, label = m[1,], cex = 0.8, col = "black")## Add text at top of bars
+      legend('topright',legend = c('Classés','Non classés'),col=c('green','gray'),pch=15)#,horiz=TRUE
     }
   })
   
@@ -258,6 +260,7 @@ shinyServer(function(input, output, session) {
       #http://stackoverflow.com/questions/29185996/plot-empty-groups-in-boxplot
       par(bty="n")
       
+      #Pour utiliser les couleurs de rainbow : Créer un box plot avec uns seule des deux cat, et superposer à ce boxplot le second en mettant entre les deux un par(new=TRUE)
       if(v$speedscale=='man'){
         boxplot(speedtoplot~racedate,data=cv$data, col=rainbow(1),range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="",main="Distribution des vitesses")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
       } else {
