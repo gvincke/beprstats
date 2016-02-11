@@ -27,28 +27,29 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 
 # TODO
 # Ajouter legendes et titres et explications dans neutralisation et poteau
-# Ajouter les nombres bruts aux barplots : pour ça il faut avoir créé liste des concours avec leur caractéristiques (neutralisations, nombre de pigeons par catégories, etc)
 # Réfléchir a montrer les changement de classement (combien de pigeons changent de position sans neutralisations)
 # Créer classement général : avec ou sans poteau !!!!! (classement vitesse puis par date+heure de constatation !!)
 # Compter combien de victoires générale par age et catégorie et le mettre dans le summary
 # Summary adapter le template grace aux colonnes et mettre des boites de texte à droite des plots
 # Calculer un classement ou tout le monde est considéré comme au poteau, et comparer avec autres modes de classements en calculant le % de pigeons qui changent de place
-# Calculer les vitesses à partir des valeurs de constatation selon le poteau, pour comparer et montrer absurdité des poteaux
 # Distance : proposer de changer le cadre de référence et afficher l'es heures de vol en y distance en x et ligne de vitesse en oblique : pour ça ajouter les heures de vol avec et sans neutralisation ?
 # Faire un scrpit de vérification des données de distance ne fut-ce que entre fichier int et doublage femelles, et entre différentes éditions du même concours
-# Ajouter la catégorie dans les facteurs de variation : et une select pour n'affichier qu'une seule catégorie quand nécéssaire
 # Expliquer en quoi c'est difficile de post-traiter : faudrais : coordonnées lieux du lâcher, coordonnées des amateurs, datetime de la constatation et pas que time, heures de neutralisation, et TOUS les résultats, pas que ceux classés, sexe de tous les pigeons, age de tous les pigeons, pays de tous les pigeons
 # Gain et Pertes : faire for i dans les catégories existantes et afficher autant de plot que de catégorie
 # Pour chaque facteur de variation dans le plot distance associer un plot de comptage des nombres par critères avec une répatition 3/4 1/4 conditionnelles (Afficher les nombres par catégorie)
 # Femelles : sexe = 0 pour sexe inconnu, et >0 = rank dans le doublage femelle ? (oui mais s'il y a plusieurs doublages ?)
 # Titres des graphiques en varaible puis paste pour le complément (plotDistance par exemple)
-# Barcelone 2010 et 2009 : vérifier que les deux premiers ne sont pas avec ds vitesses calculées trop grandes du a un jours de ocntatation erronée, car sortent du poteau !!
+# Barcelone 2010 et 2009 : vérifier que les deux premiers ne sont pas avec ds vitesses calculées trop grandes du a un jours de ocntatation erronée, car sortent du poteau !! En fait vérifier chaque cocours que le classement soit bien respecté, car dans les barcelone il y a toujours 3 - 4 pigeons issus du poteau qui ont des vitesses énormes dues à un jour de constatation erroné !
 # résultats nationaux Belgique :  toutes les femelles sont doublées car c'est gratuit : compéraison des sexes est alors possible !
 
 #Done :
 # Hypothese Philippens : poteau = pour réduire impact de la distance en dessous de 800m/min donc identifier dans le plot de distance l'effet du poteau, avec en rouge ceux qui perdent des places et en vert ceux qui en gagnent. Normalement sous le poteau je devrais trouver du vert, et au delà du rouge ... Confirmé par Sébastien casaerts et par le CFW : 800m/min est la vitesse minimale de vol du pigeon. Donc en dessous de cette vitesse il s'est OBLIGATOIREMENT arrété, et le but du poteau est de limiter cet impact d'un arrêt, qui est d'autant plus grand que la distance est longue
 # Créer liste des concours avec leur caractéristiques (neutralisations, nombre de pigeons par catégories, etc)
 # CSV : import fichier par fichier APRES selection de la course et de l'édition
+# Ajouter les nombres bruts aux barplots : pour ça il faut avoir créé liste des concours avec leur caractéristiques (neutralisations, nombre de pigeons par catégories, etc)
+# Calculer les vitesses à partir des valeurs de constatation selon le poteau, pour comparer et montrer absurdité des poteaux
+# Ajouter la catégorie dans les facteurs de variation : et une select pour n'affichier qu'une seule catégorie quand nécéssaire
+
 
 shinyServer(function(input, output, session) {
   # https://gist.github.com/trestletech/9926129
@@ -370,6 +371,19 @@ output$plotDistance <- renderPlot({
       par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
       plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de la distance parcourrue")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
     }
+    
+    if(v$distfactors=='cat'){
+      cats<-c(0,1,2)
+      col<-c('red','orange','yellow')
+      for(i in 1:3){
+        sub.data<-subset(cv$data,cat %in% c(cats[i]))
+        points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=col[i])
+      }
+      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de la distance parcourrue")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      legend('top',legend = c(tr("Youngsters"), tr("Yearlings"),tr("Olds")),col=col,pch=20,title = tr('Category'),xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
+    }
+    
     if(v$distfactors=='age'){
       agemax<-max(cv$data$age, na.rm=TRUE)
       ages<-c(0:agemax)
