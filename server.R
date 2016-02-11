@@ -638,52 +638,52 @@ output$plotPoteau <- renderPlot({
   cv<-getComputedValues()
   m<-matrix(c(1,2,3),1,3,byrow=TRUE)
   layout(m,width=c(1,1,1))
-  for(plot in 1:3){# ne marche pas à cause d ela supperposition des plots pour mettre la légende dans la marge : recréer chaque plot indépendant et mettre légende dans un 4ème tout petit plot et jouer avec les layouts plutôt qu'avec les supperpositions
-    par(bty="n",pty="s",oma = c(1,1,3,4),mar=c(1,1,4,1))#pty="s" force le plot à être carré ,oma = c(1, 1, 4, 1),mar=c(4,2,1,1)
-    
+  for(i in 0:2){# ne marche pas à cause d ela supperposition des plots pour mettre la légende dans la marge : recréer chaque plot indépendant et mettre légende dans un 4ème tout petit plot et jouer avec les layouts plutôt qu'avec les supperpositions
+    par(bty="n",pty="s")#pty="s" force le plot à être carré ,oma = c(1, 1, 4, 1),mar=c(4,2,1,1) #,oma = c(1,1,3,4),mar=c(1,1,4,1)
+    sub.data<-subset(cv$data,cat == i)
     if(v$races!="empty" & v$editions!="empty"){#reverse y axis : https://stat.ethz.ch/pipermail/r-help/2005-December/084726.html
       if(v$speedneutral=='y'){
-        plot(cv$data$catpos,cv$data$rank,ylim=rev(range(cv$data$rank)),xlab='',ylab='Classement selon les vitesses calculées AVEC neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
+        plot(sub.data$catpos,sub.data$rank,ylim=rev(range(sub.data$rank)),xlab='',ylab='Classement selon les vitesses calculées AVEC neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
       } else {
-        plot(cv$data$catpos,cv$data$rankWN,ylim=rev(range(cv$data$rankWN)),xlab='',ylab='Classement selon les vitesses calculées SANS neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
+        plot(sub.data$catpos,sub.data$rankWN,ylim=rev(range(sub.data$rankWN)),xlab='',ylab='Classement selon les vitesses calculées SANS neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
       }
       axis(3)# Draw the x axis
       axis(2)# Draw the y axis
       mtext('Classement officiel (vitesses calculées AVEC neutralisation, puis poteau)', side=3, line=3)#http://stackoverflow.com/questions/12302366/moving-axes-labels-in-r
       if(v$distfactors=='unselected'){
         if(v$speedneutral=='y'){
-          sub.data<-subset(cv$data,catposrankDiff < 0)
+          sub.data<-subset(sub.data,catposrankDiff < 0)
           points(sub.data$catpos,sub.data$rank,pch=20,col='red')
           
-          sub.data<-subset(cv$data,catposrankDiff > 0)
+          sub.data<-subset(sub.data,catposrankDiff > 0)
           points(sub.data$catpos,sub.data$rank,pch=20,col='green')
           
-          sub.data<-subset(cv$data,catposrankDiff == 0)
+          sub.data<-subset(sub.data,catposrankDiff == 0)
           points(sub.data$catpos,sub.data$rank,pch=20,col='yellow')
         } else {
-          sub.data<-subset(cv$data,catposrankWNDiff < 0)
+          sub.data<-subset(sub.data,catposrankWNDiff < 0)
           points(sub.data$catpos,sub.data$rankWN,pch=20,col='red')
           
-          sub.data<-subset(cv$data,catposrankWNDiff > 0)
+          sub.data<-subset(sub.data,catposrankWNDiff > 0)
           points(sub.data$catpos,sub.data$rankWN,pch=20,col='green')
           
-          sub.data<-subset(cv$data,catposrankWNDiff == 0)
+          sub.data<-subset(sub.data,catposrankWNDiff == 0)
           points(sub.data$catpos,sub.data$rankWN,pch=20,col='yellow')
         }
         
-        lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+        lines(c(min(sub.data$rank),max(sub.data$rank)),c(min(sub.data$rankWN),max(sub.data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
         
-        par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+#         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+#         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
         legend('right',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement',xpd=TRUE)#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
       }
       if(v$distfactors=='age'){
-        agemax<-max(cv$data$age, na.rm=TRUE)
+        agemax<-max(sub.data$age, na.rm=TRUE)
         ages<-c(0:agemax)
-        cv$data$agetoplot <- factor(cv$data$age,levels = ages)
+        sub.data$agetoplot <- factor(sub.data$age,levels = ages)
         col<-rainbow(length(ages))
         for(i in 1:length(ages)){
-          sub.data<-subset(cv$data,age %in% c(ages[i]))
+          sub.data<-subset(sub.data,age %in% c(ages[i]))
           if(v$speedneutral=='y'){
             points(sub.data$catpos,sub.data$rank,pch=20,col=col[i])
           } else {
@@ -691,19 +691,19 @@ output$plotPoteau <- renderPlot({
           }
         }
         
-        lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+        lines(c(min(sub.data$rank),max(sub.data$rank)),c(min(sub.data$rankWN),max(sub.data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
         
-        par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+#         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+#         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
         legend('right',legend = ages,col=col,pch=20,title = tr('PigeonsAge'),xpd=TRUE)#,inset=c(-0.01,0),,horiz=TRUE
       }
       
       if(v$distfactors=='date'){
         j<-c(0:4)
-        cv$data$jtoplot <- factor(cv$data$jconstat,levels = j)
+        sub.data$jtoplot <- factor(sub.data$jconstat,levels = j)
         col<-rainbow(length(j))
         for(i in 1:length(j)){
-          sub.data<-subset(cv$data,jconstat %in% c(j[i]))
+          sub.data<-subset(sub.data,jconstat %in% c(j[i]))
           if(v$speedneutral=='y'){
             points(sub.data$catpos,sub.data$rank,pch=20,col=col[i])
           } else {
@@ -711,36 +711,36 @@ output$plotPoteau <- renderPlot({
           }
         }
         
-        lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+        lines(c(min(sub.data$rank),max(sub.data$rank)),c(min(sub.data$rankWN),max(sub.data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
         
-        par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+#         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+#         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
         legend('right',legend = j+1,col=col,pch=20,title = tr('ClockingDay'),xpd=TRUE)#,inset=c(-0.01,0),horiz=TRUE
       }
       
       if(v$distfactors=='duration'){
         if(v$speedneutral=="y"){
-          dmax<-ceiling(max(cv$data$flightduration, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
+          dmax<-ceiling(max(sub.data$flightduration, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
           d<-c(1:dmax)
           col<-rainbow(dmax)#pas length(d) car on exclu le 0
           for(i in 1:dmax){#pas length(d) car on exclu le 0
-            sub.data<-subset(cv$data,flightduration <= d[i]*60*60 & flightduration > d[i-1]*60*60)
+            sub.data<-subset(sub.data,flightduration <= d[i]*60*60 & flightduration > d[i-1]*60*60)
             points(sub.data$catpos,sub.data$rank,pch=20,col=col[i])
           }
         } else {
-          dmax<-ceiling(max(cv$data$flightdurationWN, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
+          dmax<-ceiling(max(sub.data$flightdurationWN, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
           d<-c(1:dmax)
           col<-rainbow(dmax)#pas length(d) car on exclu le 0
           for(i in 1:dmax){#pas length(d) car on exclu le 0
-            sub.data<-subset(cv$data,flightdurationWN <= d[i]*60*60 & flightdurationWN > d[i-1]*60*60)
+            sub.data<-subset(sub.data,flightdurationWN <= d[i]*60*60 & flightdurationWN > d[i-1]*60*60)
             points(sub.data$catpos,sub.data$rankWN,pch=20,col=col[i])
           }
         }
         
-        lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+        lines(c(min(sub.data$rank),max(sub.data$rank)),c(min(sub.data$rankWN),max(sub.data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
         
-        par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+#         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+#         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
         color.legend.labels<-seq(1,dmax,by=4)
         color.legend.labels<-paste(color.legend.labels,"h",sep='')
         color.legend(1,0.5,1.03,-0.5,color.legend.labels,col,gradient="y")
