@@ -260,11 +260,10 @@ shinyServer(function(input, output, session) {
       #http://stackoverflow.com/questions/29185996/plot-empty-groups-in-boxplot
       par(bty="n")
       
-      #Pour utiliser les couleurs de rainbow : Créer un box plot avec uns seule des deux cat, et superposer à ce boxplot le second en mettant entre les deux un par(new=TRUE)
       if(v$speedscale=='man'){
-        boxplot(speedtoplot~racedate,data=cv$data, col=rainbow(1),range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="",main="Distribution des vitesses")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+        boxplot(speedtoplot~racedate,data=cv$data, col='green',range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="",main="Distribution des vitesses")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
       } else {
-        boxplot(speedtoplot~racedate,data=cv$data, col=rainbow(1),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="",main="Distribution des vitesses")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+        boxplot(speedtoplot~racedate,data=cv$data, col='green',range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="",main="Distribution des vitesses")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
       }
       
       catmax<-max(cv$data$cat, na.rm=TRUE)
@@ -285,47 +284,42 @@ shinyServer(function(input, output, session) {
         boxplot(speedtoplot~agetoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Age (années)",main="Distribution des vitesses par classe d'age")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
       }
       
-#       if(v$speedscale=='man'){
-#         plot(cv$data$distkm,cv$data$speed,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="Distance (km)",main="Distribution des vitesses par unité de distance",pch=20)#,ylim=c(min(cv$data$speed),max(cv$data$speed))
-#       } else {
-#         plot(cv$data$distkm,cv$data$speed,ylab="Vitesse (m/min)",xlab="Distance (km)",main="Distribution des vitesses par unité de distance",pch=20)#,ylim=c(min(cv$data$speed),max(cv$data$speed))
-#       }
-#       col<-rainbow(length(unique(cv$data$age)))
-#       for(i in 1:length(unique(cv$data$age))){
-#         sub.data<-subset(cv$data,age %in% c(i))
-#         points(sub.data$distkm,sub.data$speed,pch=20,col=col[i])
-#       }
-      
-      
-#       dateconstats<-factor(unique(cv$data$dateconstat))
-#       col<-rainbow(length(dateconstats))
-#       for(i in 1:length(dateconstats)){
-#         dc<-as.character(dateconstats[i])
-#         sub.data<-subset(cv$data,dateconstat %in% c(dc))
-#         points(sub.data$distkm,sub.data$speed,pch=20,col=col[i])
-#       }
-      
-      
       #reg <- lm(cv$data$speed~cv$data$distkm)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
       #abline(reg,col="blue")#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
       #http://stackoverflow.com/questions/24173468/r-print-equation-of-linear-regression-on-the-plot-itself
       #https://stat.ethz.ch/pipermail/r-help/2007-November/146285.html (confidence interval)
       
-      n <- table(factor(cv$data$racedate))
-      bp<-barplot(n, xlab=" ",xaxt="n",ylab="Nombre de pigeons",main="Nombre total de pigeons",col=rainbow(1),ylim=c(0,roundUpNice(nrow(cv$data))))
-      text(x = bp, y = n, label = n, pos = 3, cex = 0.8, col = "red")## Add text at top of bars
+      #catnb
+      N0<-races[races$date == v$editions & races$name==v$races, "cn0"]
+      N1<-races[races$date == v$editions & races$name==v$races, "cn1"]
+      N2<-races[races$date == v$editions & races$name==v$races, "cn2"]
+      #Calculer le nombre de clasés car ce n'est pas toujours mentionné ni standard.
+      n0<-length(cv$dataS[cv$dataS$racedate == v$editions & cv$dataS$racename==v$races & cv$dataS$cat =="0","speed"])
+      n1<-length(cv$dataS[cv$dataS$racedate == v$editions & cv$dataS$racename==v$races & cv$dataS$cat =="1","speed"])
+      n2<-length(cv$dataS[cv$dataS$racedate == v$editions & cv$dataS$racename==v$races & cv$dataS$cat =="2","speed"])
       
-      n <- table(factor(cv$data$cat,levels = 0:catmax))#http://r.789695.n4.nabble.com/creating-empty-cells-with-table-td798211.html
-      bp<-barplot(n, xlab="Catégorie",ylab="Nombre de pigeons",main="Nombre de pigeons par catégorie",col=rainbow(length(unique(cv$data$age))),ylim=c(0,roundUpNice(nrow(cv$data))),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
-      text(x = bp, y = n, label = n, pos = 3, cex = 0.8, col = "red")## Add text at top of bars
+      n<-c((N0+N1+N2)-(n0+n1+n2),n0+n1+n2)
+      m<-as.matrix(structure(list(n), class = "data.frame", .Names=v$editions, row.names=c(NA,-2L)))
+      bp<-barplot(m, xlab=" ",xaxt="n",ylab="Nombre de pigeons",main="Nombre total de pigeons",col=c('gray','green'),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))))
+      text(x = bp, y = m[1,]+m[2,], label = m[1,]+m[2,], pos = 3, cex = 1, col = "red")## Add text at top of bars
+      text(x = bp, y = m[1,]+(m[2,]/2), label = m[2,], cex = 1, col = "black")## Add text at top of bars
+      text(x = bp, y = m[1,]/2, label = m[1,], cex = 1, col = "black")## Add text at top of bars
       
+      #Pour utiliser les couleurs de rainbow : Créer un box plot avec uns seule des deux cat, et superposer à ce boxplot le second en mettant entre les deux un par(new=TRUE)
+      N<-c(N0,N1,N2)#total
+      nc<-c(n0,n1,n2)#classés
+      nnc<-c(N0-n0,N1-n1,N2-n2)#non classés
+      bp<-barplot(N, xlab="Catégorie",ylab="Nombre de pigeons",main="Nombre de pigeons par catégorie",col=rainbow(length(unique(cv$data$age))),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
+      text(x = bp, y = N, label = N, pos = 3, cex = 1, col = "red")## Add text at top of bars
+      text(x = bp, y = nnc+nc/2, label = nc, cex = 1, col = "black")
+      par(new=TRUE)     
+      bp<-barplot(nnc, xlab="Catégorie",ylab="Nombre de pigeons",main="Nombre de pigeons par catégorie",col=c('gray'),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
+      text(x = bp, y = nnc/2, label = nnc, cex = 1, col = "black")
+
       agemax<-max(cv$data$age, na.rm=TRUE)
       n <- table(factor(cv$data$age,levels = 0:agemax))#http://r.789695.n4.nabble.com/creating-empty-cells-with-table-td798211.html
       bp<-barplot(n, xlab="Age (années)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe d'age",col=rainbow(length(unique(cv$data$age))),ylim=c(0,roundUpNice(nrow(cv$data))))
-      text(x = bp, y = n, label = n, pos = 3, cex = 0.8, col = "red")## Add text at top of bars
-
-      
-      #hist(cv$data$speed,breaks=20,xlab="Vitesse (m/min)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe de vitesse")
+      text(x = bp, y = n, label = n, pos = 3, cex = 1, col = "red")## Add text at top of bars
     }
   })
 
