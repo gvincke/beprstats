@@ -163,48 +163,56 @@ shinyServer(function(input, output, session) {
     # Import all editions of this race to allow summary to be active
     if(v$races!="empty" ){#& v$editions== "empty"
       files <- list.files(path = "./data/results",pattern = paste("*-",races$id,"-[[:digit:]]{1}.csv",sep=""))
+  
+  #     if(v$races!="empty" & v$editions != "empty") {
+  #       files <- list.files(path = "./data/results",pattern = paste(v$editions,"-",races$id,"-[[:digit:]]{1}.csv",sep=""))
+  #     }
+      # First apply read.csv, then rbind
+      results <- do.call(rbind, lapply(files, function(x) read.csv(paste(".","data","results",x,sep="/"), sep=",", dec=".")))
+      results$speedkmh<-(results$speed/1000)*60
+      
+      cv$data<-results
+      cv$dataS<-results#pour le summary
+      if(v$races!="empty"){
+        cv$data<-subset(cv$data,racename %in% c(v$races))
+        cv$dataS<-subset(cv$dataS,racename %in% c(v$races))
+      }
+      if(v$editions!="empty"){
+        cv$data<-subset(cv$data,racedate %in% c(v$editions))
+      }
+      if(v$racecat!="-1"){
+        cv$data<-subset(cv$data,cat %in% c(v$racecat))
+      }
+      if(v$speedneutral=='n'){
+        cv$data$speedtoplot<-cv$data$speedWN
+        cv$dataS$speedtoplot<-cv$dataS$speedWN
+      } else {
+        cv$data$speedtoplot<-cv$data$speed
+        cv$dataS$speedtoplot<-cv$dataS$speed
+      }
+      if(v$speedloosegain=='n'){
+        cv$data<-subset(cv$data,speedtoplot >= 800)
+        cv$dataS<-subset(cv$dataS,speedtoplot >= 800)
+      }
+      
+      #Calculer un rang total ok, mais faut surtout rang calculé DANS la catégorie !
+      cv$data <- do.call("rbind", as.list(by(cv$data, cv$data["cat"], transform, catrank=rank(-speed,na.last='NA',ties.method='min'))))
+      cv$data <- do.call("rbind", as.list(by(cv$data, cv$data["cat"], transform, catrankWN=rank(-speedWN,na.last='NA',ties.method='min'))))
+      rownames(cv$data) <- 1:nrow(cv$data)#Reconstruire les indices changés par le(s) do.call précédent
+      cv$data$catrankDiff<-cv$data$catrank-cv$data$catrankWN
+      cv$data$catposcatrankDiff<-cv$data$catpos-cv$data$catrank
+      cv$data$catposcatrankWNDiff<-cv$data$catpos-cv$data$catrankWN
+  
+      cv$data$rank<-rank(-cv$data$speed,na.last='NA',ties.method='min')
+      cv$data$rankWN<-rank(-cv$data$speedWN,na.last='NA',ties.method='min')
+      cv$data$rankDiff<-cv$data$rank-cv$data$rankWN
+      cv$data$catposrankDiff<-cv$data$catpos-cv$data$rank
+      cv$data$catposrankWNDiff<-cv$data$catpos-cv$data$rankWN
+      cv$data$racedate <- factor(cv$data$racedate)#http://stackoverflow.com/questions/1195826/drop-factor-levels-in-a-subsetted-data-frame
+      cv$dataS$racedate <- factor(cv$dataS$racedate)#http://stackoverflow.com/questions/1195826/drop-factor-levels-in-a-subsetted-data-frame
+      cv$data$distkm<-cv$data$dist/1000
+      cv$datatoshow<-subset(cv$data,select=c(ring,age,owner,location,racename,racedate,cat,catpos,ownerpos,dist,time,speed,speedkmh,rank,rankWN,rankDiff))
     }
-#     if(v$races!="empty" & v$editions != "empty") {
-#       files <- list.files(path = "./data/results",pattern = paste(v$editions,"-",races$id,"-[[:digit:]]{1}.csv",sep=""))
-#     }
-    # First apply read.csv, then rbind
-    results <- do.call(rbind, lapply(files, function(x) read.csv(paste(".","data","results",x,sep="/"), sep=",", dec=".")))
-    results$speedkmh<-(results$speed/1000)*60
-    
-    cv$data<-results
-    cv$dataS<-results#pour le summary
-    if(v$races!="empty"){
-      cv$data<-subset(cv$data,racename %in% c(v$races))
-      cv$dataS<-subset(cv$dataS,racename %in% c(v$races))
-    }
-    if(v$editions!="empty"){
-      cv$data<-subset(cv$data,racedate %in% c(v$editions))
-    }
-    if(v$racecat!="-1"){
-      cv$data<-subset(cv$data,cat %in% c(v$racecat))
-    }
-    if(v$speedneutral=='n'){
-      cv$data$speedtoplot<-cv$data$speedWN
-      cv$dataS$speedtoplot<-cv$dataS$speedWN
-    } else {
-      cv$data$speedtoplot<-cv$data$speed
-      cv$dataS$speedtoplot<-cv$dataS$speed
-    }
-    if(v$speedloosegain=='n'){
-      cv$data<-subset(cv$data,speedtoplot >= 800)
-      cv$dataS<-subset(cv$dataS,speedtoplot >= 800)
-    }
-    
-    
-    cv$data$rank<-rank(-cv$data$speed,na.last='NA',ties.method='min')
-    cv$data$rankWN<-rank(-cv$data$speedWN,na.last='NA',ties.method='min')
-    cv$data$rankDiff<-cv$data$rank-cv$data$rankWN
-    cv$data$catposrankDiff<-cv$data$catpos-cv$data$rank
-    cv$data$catposrankWNDiff<-cv$data$catpos-cv$data$rankWN
-    cv$data$racedate <- factor(cv$data$racedate)#http://stackoverflow.com/questions/1195826/drop-factor-levels-in-a-subsetted-data-frame
-    cv$dataS$racedate <- factor(cv$dataS$racedate)#http://stackoverflow.com/questions/1195826/drop-factor-levels-in-a-subsetted-data-frame
-    cv$data$distkm<-cv$data$dist/1000
-    cv$datatoshow<-subset(cv$data,select=c(ring,age,owner,location,racename,racedate,cat,catpos,ownerpos,dist,time,speed,speedkmh,rank,rankWN,rankDiff))
     return(cv)
   })
   
@@ -643,35 +651,35 @@ output$plotPoteau <- renderPlot({
     sub.data<-subset(cv$data,cat == i)
     if(v$races!="empty" & v$editions!="empty"){#reverse y axis : https://stat.ethz.ch/pipermail/r-help/2005-December/084726.html
       if(v$speedneutral=='y'){
-        plot(sub.data$catpos,sub.data$rank,ylim=rev(range(sub.data$rank)),xlab='',ylab='Classement selon les vitesses calculées AVEC neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
+        plot(sub.data$catpos,sub.data$catrank,ylim=rev(range(sub.data$catrank)),xlab='',ylab='Classement selon les vitesses calculées AVEC neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
       } else {
-        plot(sub.data$catpos,sub.data$rankWN,ylim=rev(range(sub.data$rankWN)),xlab='',ylab='Classement selon les vitesses calculées SANS neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
+        plot(sub.data$catpos,sub.data$catrankWN,ylim=rev(range(sub.data$catrankWN)),xlab='',ylab='Classement selon les vitesses calculées SANS neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
       }
       axis(3)# Draw the x axis
       axis(2)# Draw the y axis
       mtext('Classement officiel (vitesses calculées AVEC neutralisation, puis poteau)', side=3, line=3)#http://stackoverflow.com/questions/12302366/moving-axes-labels-in-r
       if(v$distfactors=='unselected'){
         if(v$speedneutral=='y'){
-          sub.data<-subset(sub.data,catposrankDiff < 0)
-          points(sub.data$catpos,sub.data$rank,pch=20,col='red')
+          sub.data<-subset(sub.data,catposcatrankDiff < 0)
+          points(sub.data$catpos,sub.data$catrank,pch=20,col='red')
           
-          sub.data<-subset(sub.data,catposrankDiff > 0)
-          points(sub.data$catpos,sub.data$rank,pch=20,col='green')
+          sub.data<-subset(sub.data,catposcatrankDiff > 0)
+          points(sub.data$catpos,sub.data$catrank,pch=20,col='green')
           
-          sub.data<-subset(sub.data,catposrankDiff == 0)
-          points(sub.data$catpos,sub.data$rank,pch=20,col='yellow')
+          sub.data<-subset(sub.data,catposcatrankDiff == 0)
+          points(sub.data$catpos,sub.data$catrank,pch=20,col='yellow')
         } else {
-          sub.data<-subset(sub.data,catposrankWNDiff < 0)
-          points(sub.data$catpos,sub.data$rankWN,pch=20,col='red')
+          sub.data<-subset(sub.data,catposcatrankWNDiff < 0)
+          points(sub.data$catpos,sub.data$catrankWN,pch=20,col='red')
           
-          sub.data<-subset(sub.data,catposrankWNDiff > 0)
-          points(sub.data$catpos,sub.data$rankWN,pch=20,col='green')
+          sub.data<-subset(sub.data,catposcatrankWNDiff > 0)
+          points(sub.data$catpos,sub.data$catrankWN,pch=20,col='green')
           
-          sub.data<-subset(sub.data,catposrankWNDiff == 0)
-          points(sub.data$catpos,sub.data$rankWN,pch=20,col='yellow')
+          sub.data<-subset(sub.data,catposcatrankWNDiff == 0)
+          points(sub.data$catpos,sub.data$catrankWN,pch=20,col='yellow')
         }
         
-        lines(c(min(sub.data$rank),max(sub.data$rank)),c(min(sub.data$rankWN),max(sub.data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+        lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
         
 #         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
 #         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
@@ -685,13 +693,13 @@ output$plotPoteau <- renderPlot({
         for(i in 1:length(ages)){
           sub.data<-subset(sub.data,age %in% c(ages[i]))
           if(v$speedneutral=='y'){
-            points(sub.data$catpos,sub.data$rank,pch=20,col=col[i])
+            points(sub.data$catpos,sub.data$catrank,pch=20,col=col[i])
           } else {
-            points(sub.data$catpos,sub.data$rankWN,pch=20,col=col[i])
+            points(sub.data$catpos,sub.data$catrankWN,pch=20,col=col[i])
           }
         }
         
-        lines(c(min(sub.data$rank),max(sub.data$rank)),c(min(sub.data$rankWN),max(sub.data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+        lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
         
 #         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
 #         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
@@ -705,13 +713,13 @@ output$plotPoteau <- renderPlot({
         for(i in 1:length(j)){
           sub.data<-subset(sub.data,jconstat %in% c(j[i]))
           if(v$speedneutral=='y'){
-            points(sub.data$catpos,sub.data$rank,pch=20,col=col[i])
+            points(sub.data$catpos,sub.data$catrank,pch=20,col=col[i])
           } else {
-            points(sub.data$catpos,sub.data$rankWN,pch=20,col=col[i])
+            points(sub.data$catpos,sub.data$catrankWN,pch=20,col=col[i])
           }
         }
         
-        lines(c(min(sub.data$rank),max(sub.data$rank)),c(min(sub.data$rankWN),max(sub.data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+        lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
         
 #         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
 #         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
@@ -725,7 +733,7 @@ output$plotPoteau <- renderPlot({
           col<-rainbow(dmax)#pas length(d) car on exclu le 0
           for(i in 1:dmax){#pas length(d) car on exclu le 0
             sub.data<-subset(sub.data,flightduration <= d[i]*60*60 & flightduration > d[i-1]*60*60)
-            points(sub.data$catpos,sub.data$rank,pch=20,col=col[i])
+            points(sub.data$catpos,sub.data$catrank,pch=20,col=col[i])
           }
         } else {
           dmax<-ceiling(max(sub.data$flightdurationWN, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
@@ -733,11 +741,11 @@ output$plotPoteau <- renderPlot({
           col<-rainbow(dmax)#pas length(d) car on exclu le 0
           for(i in 1:dmax){#pas length(d) car on exclu le 0
             sub.data<-subset(sub.data,flightdurationWN <= d[i]*60*60 & flightdurationWN > d[i-1]*60*60)
-            points(sub.data$catpos,sub.data$rankWN,pch=20,col=col[i])
+            points(sub.data$catpos,sub.data$catrankWN,pch=20,col=col[i])
           }
         }
         
-        lines(c(min(sub.data$rank),max(sub.data$rank)),c(min(sub.data$rankWN),max(sub.data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+        lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
         
 #         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
 #         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
