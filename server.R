@@ -658,33 +658,7 @@ output$plotPoteau <- renderPlot({
       axis(3)# Draw the x axis
       axis(2)# Draw the y axis
       mtext('Classement officiel (vitesses calculées AVEC neutralisation, puis poteau)', side=3, line=3)#http://stackoverflow.com/questions/12302366/moving-axes-labels-in-r
-      if(v$distfactors=='unselected'){
-        if(v$speedneutral=='y'){
-          sub.data<-subset(sub.data,catposcatrankDiff < 0)
-          points(sub.data$catpos,sub.data$catrank,pch=20,col='red')
-          
-          sub.data<-subset(sub.data,catposcatrankDiff > 0)
-          points(sub.data$catpos,sub.data$catrank,pch=20,col='green')
-          
-          sub.data<-subset(sub.data,catposcatrankDiff == 0)
-          points(sub.data$catpos,sub.data$catrank,pch=20,col='yellow')
-        } else {
-          sub.data<-subset(sub.data,catposcatrankWNDiff < 0)
-          points(sub.data$catpos,sub.data$catrankWN,pch=20,col='red')
-          
-          sub.data<-subset(sub.data,catposcatrankWNDiff > 0)
-          points(sub.data$catpos,sub.data$catrankWN,pch=20,col='green')
-          
-          sub.data<-subset(sub.data,catposcatrankWNDiff == 0)
-          points(sub.data$catpos,sub.data$catrankWN,pch=20,col='yellow')
-        }
-        
-        lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
-        
-#         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-#         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        legend('right',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement',xpd=TRUE)#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
-      }
+
       if(v$distfactors=='age'){
         agemax<-max(sub.data$age, na.rm=TRUE)
         ages<-c(0:agemax)
@@ -752,6 +726,31 @@ output$plotPoteau <- renderPlot({
         color.legend.labels<-seq(1,dmax,by=4)
         color.legend.labels<-paste(color.legend.labels,"h",sep='')
         color.legend(1,0.5,1.03,-0.5,color.legend.labels,col,gradient="y")
+      }
+
+      if(v$distfactors=='gainorloose'){
+        if(v$speedneutral=='y'){
+          sub.sub.data<-subset(sub.data,catposcatrankDiff < 0)
+          points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col='red')
+          
+          sub.sub.data<-subset(sub.data,catposcatrankDiff > 0)
+          points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col='green')
+          
+          sub.sub.data<-subset(sub.data,catposcatrankDiff == 0)
+          points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col='yellow')
+        } else {
+          sub.sub.data<-subset(sub.data,catposcatrankWNDiff < 0)
+          points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col='red')
+          
+          sub.sub.data<-subset(sub.data,catposcatrankWNDiff > 0)
+          points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col='green')
+          
+          sub.sub.data<-subset(sub.data,catposcatrankWNDiff == 0)
+          points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col='yellow')
+        }
+        
+        lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
+        legend('right',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement',xpd=TRUE)#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
       }
     }
   }
