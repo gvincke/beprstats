@@ -518,13 +518,13 @@ output$plotDistance <- renderPlot({
 
   if(v$distfactors=='gainorloose'){
   
-      sub.data<-subset(cv$data,catposrankDiff < 0)
-      points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=paste('red',ceiling(sub.data$catposrankDiff/(min(sub.data$catposrankDiff)/4)),sep=""))#Il y a 4 niveaux de couleur red plus cest foncé plus la différence de classement est grande
+      sub.data<-subset(cv$data,catposcatrankDiff < 0)
+      points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=paste('red',ceiling(sub.data$catposcatrankDiff/(min(sub.data$catposcatrankDiff)/4)),sep=""))#Il y a 4 niveaux de couleur red plus cest foncé plus la différence de classement est grande
       
-      sub.data<-subset(cv$data,catposrankDiff > 0)
-      points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=paste('green',ceiling(sub.data$catposrankDiff/(max(sub.data$catposrankDiff)/4)),sep=""))#Il y a 4 niveaux de couleur green plus cest foncé plus la différence de classement est grande
+      sub.data<-subset(cv$data,catposcatrankDiff > 0)
+      points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=paste('green',ceiling(sub.data$catposcatrankDiff/(max(sub.data$catposcatrankDiff)/4)),sep=""))#Il y a 4 niveaux de couleur green plus cest foncé plus la différence de classement est grande
       
-      sub.data<-subset(cv$data,catposrankDiff == 0)
+      sub.data<-subset(cv$data,catposcatrankDiff == 0)
       points(sub.data$distkm,sub.data$speedtoplot,pch=20,col='yellow')
   
     par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
