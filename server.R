@@ -35,7 +35,6 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 # Distance : proposer de changer le cadre de référence et afficher l'es heures de vol en y distance en x et ligne de vitesse en oblique : pour ça ajouter les heures de vol avec et sans neutralisation ?
 # Faire un scrpit de vérification des données de distance ne fut-ce que entre fichier int et doublage femelles, et entre différentes éditions du même concours
 # Expliquer en quoi c'est difficile de post-traiter : faudrais : coordonnées lieux du lâcher, coordonnées des amateurs, datetime de la constatation et pas que time, heures de neutralisation, et TOUS les résultats, pas que ceux classés, sexe de tous les pigeons, age de tous les pigeons, pays de tous les pigeons
-# Gain et Pertes : faire for i dans les catégories existantes et afficher autant de plot que de catégorie
 # Pour chaque facteur de variation dans le plot distance associer un plot de comptage des nombres par critères avec une répatition 3/4 1/4 conditionnelles (Afficher les nombres par catégorie)
 # Femelles : sexe = 0 pour sexe inconnu, et >0 = rank dans le doublage femelle ? (oui mais s'il y a plusieurs doublages ?)
 # Titres des graphiques en varaible puis paste pour le complément (plotDistance par exemple)
@@ -49,7 +48,8 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 # Ajouter les nombres bruts aux barplots : pour ça il faut avoir créé liste des concours avec leur caractéristiques (neutralisations, nombre de pigeons par catégories, etc)
 # Calculer les vitesses à partir des valeurs de constatation selon le poteau, pour comparer et montrer absurdité des poteaux
 # Ajouter la catégorie dans les facteurs de variation : et une select pour n'affichier qu'une seule catégorie quand nécéssaire
-
+# http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+# Gain et Pertes : faire for i dans les catégories existantes et afficher autant de plot que de catégorie
 
 shinyServer(function(input, output, session) {
   # https://gist.github.com/trestletech/9926129
@@ -649,7 +649,7 @@ output$plotPoteau <- renderPlot({
   for(i in 0:2){# ne marche pas à cause d ela supperposition des plots pour mettre la légende dans la marge : recréer chaque plot indépendant et mettre légende dans un 4ème tout petit plot et jouer avec les layouts plutôt qu'avec les supperpositions
     par(bty="n",pty="s")#pty="s" force le plot à être carré ,oma = c(1, 1, 4, 1),mar=c(4,2,1,1) #,oma = c(1,1,3,4),mar=c(1,1,4,1)
     sub.data<-subset(cv$data,cat == i)
-    if(v$races!="empty" & v$editions!="empty"){#reverse y axis : https://stat.ethz.ch/pipermail/r-help/2005-December/084726.html
+    if(v$races!="empty" & v$editions!="empty" & nrow(sub.data)>0){#reverse y axis : https://stat.ethz.ch/pipermail/r-help/2005-December/084726.html
       if(v$speedneutral=='y'){
         plot(sub.data$catpos,sub.data$catrank,ylim=rev(range(sub.data$catrank)),xlab='',ylab='Classement selon les vitesses calculées AVEC neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
       } else {
@@ -674,9 +674,6 @@ output$plotPoteau <- renderPlot({
         }
         
         lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
-        
-#         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-#         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
         legend('right',legend = ages,col=col,pch=20,title = tr('PigeonsAge'),xpd=TRUE)#,inset=c(-0.01,0),,horiz=TRUE
       }
       
@@ -694,9 +691,6 @@ output$plotPoteau <- renderPlot({
         }
         
         lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
-        
-#         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-#         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
         legend('right',legend = j+1,col=col,pch=20,title = tr('ClockingDay'),xpd=TRUE)#,inset=c(-0.01,0),horiz=TRUE
       }
       
@@ -721,8 +715,6 @@ output$plotPoteau <- renderPlot({
         
         lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
         
-#         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-#         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison du classement officiel avec celui basé sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
         color.legend.labels<-seq(1,dmax,by=4)
         color.legend.labels<-paste(color.legend.labels,"h",sep='')
         color.legend(1,0.5,1.03,-0.5,color.legend.labels,col,gradient="y")
@@ -752,6 +744,13 @@ output$plotPoteau <- renderPlot({
         lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
         legend('right',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement',xpd=TRUE)#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
       }
+    } else {
+      par(bty="n",pty="s")
+      plot(0,0,ylim=rev(range(cv$data$catrankWN)),xlim=range(cv$data$catrank),xlab='',ylab='Classement selon les vitesses calculées SANS neutralisation',main='',pch=20,col='white',axes=FALSE)
+      axis(3)# Draw the x axis
+      axis(2)# Draw the y axis
+      mtext('Classement officiel (vitesses calculées AVEC neutralisation, puis poteau)', side=3, line=3)#http://stackoverflow.com/questions/12302366/moving-axes-labels-in-r
+      
     }
   }
 })
