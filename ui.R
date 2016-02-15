@@ -47,7 +47,7 @@ shinyUI(navbarPage("Belgium Pigeon Racing Statistics",id="main",#http://shiny.rs
         uiOutput("uiSBGeneralSettingsTitle"),
         uiOutput("uiSBPigeonsSpeed")
       ),
-    conditionalPanel(condition = "input.Tabset==3 | input.Tabset==6 | input.Tabset==7",
+    conditionalPanel(condition = "input.Tabset==3 | input.Tabset==6",
       wellPanel(
         uiOutput("uiSBAdditionalSettingsTitle"),
         selectInput("distfactors", label=uiOutput("uiSBDistFact"), choices="",selectize=FALSE),

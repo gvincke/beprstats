@@ -35,12 +35,12 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 # Distance : proposer de changer le cadre de référence et afficher l'es heures de vol en y distance en x et ligne de vitesse en oblique : pour ça ajouter les heures de vol avec et sans neutralisation ?
 # Faire un scrpit de vérification des données de distance ne fut-ce que entre fichier int et doublage femelles, et entre différentes éditions du même concours
 # Expliquer en quoi c'est difficile de post-traiter : faudrais : coordonnées lieux du lâcher, coordonnées des amateurs, datetime de la constatation et pas que time, heures de neutralisation, et TOUS les résultats, pas que ceux classés, sexe de tous les pigeons, age de tous les pigeons, pays de tous les pigeons
-# Pour chaque facteur de variation dans le plot distance associer un plot de comptage des nombres par critères avec une répatition 3/4 1/4 conditionnelles (Afficher les nombres par catégorie)
+# Pour chaque facteur de variation dans le plot distance associer un plot de comptage des nombres par critères avec une répatition 3/4 1/4 conditionnelles (Afficher les nombres par catégorie) : ou ajouter les nombres dans les légendes !!! en face de chaque niveau de chaque facteur ?
 # Femelles : sexe = 0 pour sexe inconnu, et >0 = rank dans le doublage femelle ? (oui mais s'il y a plusieurs doublages ?)
 # Titres des graphiques en varaible puis paste pour le complément (plotDistance par exemple)
 # Barcelone 2010 et 2009 : vérifier que les deux premiers ne sont pas avec ds vitesses calculées trop grandes du a un jours de ocntatation erronée, car sortent du poteau !! En fait vérifier chaque cocours que le classement soit bien respecté, car dans les barcelone il y a toujours 3 - 4 pigeons issus du poteau qui ont des vitesses énormes dues à un jour de constatation erroné !
 # résultats nationaux Belgique :  toutes les femelles sont doublées car c'est gratuit : compéraison des sexes est alors possible !
-
+# Supprimer le plotNeutral, et le fisionner avec le plot Poteau pour en faire un plot Classements ou on peut sélectionner ce qu'on met en x (catpos ou rank) et ce qu'on met en y (rank ou rankWN)
 #Done :
 # Hypothese Philippens : poteau = pour réduire impact de la distance en dessous de 800m/min donc identifier dans le plot de distance l'effet du poteau, avec en rouge ceux qui perdent des places et en vert ceux qui en gagnent. Normalement sous le poteau je devrais trouver du vert, et au delà du rouge ... Confirmé par Sébastien casaerts et par le CFW : 800m/min est la vitesse minimale de vol du pigeon. Donc en dessous de cette vitesse il s'est OBLIGATOIREMENT arrété, et le but du poteau est de limiter cet impact d'un arrêt, qui est d'autant plus grand que la distance est longue
 # Créer liste des concours avec leur caractéristiques (neutralisations, nombre de pigeons par catégories, etc)
@@ -474,115 +474,8 @@ output$plotDistance <- renderPlot({
     legend('right',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement',xpd=TRUE)#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE 
   }
 })
-  
-output$plotNeutral <- renderPlot({
-  v<-getInputValues()
-  cv<-getComputedValues()
-  
-   par(bty="n",pty="s",oma = c(1, 1, 3, 4),mar=c(1,1,4,1))#pty="s" force le plot à être carré ,oma = c(1, 1, 4, 1),mar=c(4,2,1,1)
-  
-  if(v$races!="empty" & v$editions!="empty"){#reverse y axis : https://stat.ethz.ch/pipermail/r-help/2005-December/084726.html
-    if(v$speedneutral=='y'){
-      plot(cv$data$rank,cv$data$rank,ylim=rev(range(cv$data$rank)),xlab='',ylab='Classement selon les vitesses calculées AVEC neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
-    } else {
-      plot(cv$data$rank,cv$data$rankWN,ylim=rev(range(cv$data$rankWN)),xlab='',ylab='Classement selon les vitesses calculées SANS neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
-    }
-    axis(3)# Draw the x axis
-    axis(2)# Draw the y axis
-    mtext('Classement selon les vitesses calculées AVEC neutralisation', side=3, line=3)#http://stackoverflow.com/questions/12302366/moving-axes-labels-in-r
-    if(v$distfactors=='unselected'){
-      if(v$speedneutral=='y'){
-        points(cv$data$rank,cv$data$rank,pch=20,col='yellow')
-      } else {
-        sub.data<-subset(cv$data,rankDiff < 0)
-        points(sub.data$rank,sub.data$rankWN,pch=20,col='red')
-        
-        sub.data<-subset(cv$data,rankDiff > 0)
-        points(sub.data$rank,sub.data$rankWN,pch=20,col='green')
-        
-        sub.data<-subset(cv$data,rankDiff == 0)
-        points(sub.data$rank,sub.data$rankWN,pch=20,col='yellow')
-      }
 
-      lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
-      
-      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison des classements basés sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-      legend('right',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement',xpd=TRUE)#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
-   }
-    if(v$distfactors=='age'){
-      agemax<-max(cv$data$age, na.rm=TRUE)
-      ages<-c(0:agemax)
-      cv$data$agetoplot <- factor(cv$data$age,levels = ages)
-      col<-rainbow(length(ages))
-      for(i in 1:length(ages)){
-        sub.data<-subset(cv$data,age %in% c(ages[i]))
-        if(v$speedneutral=='y'){
-          points(sub.data$rank,sub.data$rank,pch=20,col=col[i])
-        } else {
-          points(sub.data$rank,sub.data$rankWN,pch=20,col=col[i])
-        }
-      }
-      
-      lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
-      
-      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison des classements basés sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-      legend('right',legend = ages,col=col,pch=20,title = tr('PigeonsAge'),xpd=TRUE)#,inset=c(-0.01,0),,horiz=TRUE
-    }
-
-    if(v$distfactors=='date'){
-      j<-c(0:4)
-      cv$data$jtoplot <- factor(cv$data$jconstat,levels = j)
-      col<-rainbow(length(j))
-      for(i in 1:length(j)){
-        sub.data<-subset(cv$data,jconstat %in% c(j[i]))
-        if(v$speedneutral=='y'){
-          points(sub.data$rank,sub.data$rank,pch=20,col=col[i])
-        } else {
-          points(sub.data$rank,sub.data$rankWN,pch=20,col=col[i])
-        }
-      }
-      
-      lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
-      
-      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison des classements basés sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-      legend('right',legend = j+1,col=col,pch=20,title = tr('ClockingDay'),xpd=TRUE)#,inset=c(-0.01,0),horiz=TRUE
-    }
-
-    if(v$distfactors=='duration'){
-      if(v$speedneutral=="y"){
-        dmax<-ceiling(max(cv$data$flightduration, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
-        d<-c(1:dmax)
-        col<-rainbow(dmax)#pas length(d) car on exclu le 0
-        for(i in 1:dmax){#pas length(d) car on exclu le 0
-          sub.data<-subset(cv$data,flightduration <= d[i]*60*60 & flightduration > d[i-1]*60*60)
-          points(sub.data$rank,sub.data$rank,pch=20,col=col[i])
-        }
-      } else {
-        dmax<-ceiling(max(cv$data$flightdurationWN, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
-        d<-c(1:dmax)
-        col<-rainbow(dmax)#pas length(d) car on exclu le 0
-        for(i in 1:dmax){#pas length(d) car on exclu le 0
-          sub.data<-subset(cv$data,flightdurationWN <= d[i]*60*60 & flightdurationWN > d[i-1]*60*60)
-          points(sub.data$rank,sub.data$rankWN,pch=20,col=col[i])
-        }
-      }
-      
-      lines(c(min(cv$data$rank),max(cv$data$rank)),c(min(cv$data$rankWN),max(cv$data$rankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
-      
-      par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Comparaison des classements basés sur les vitesses calculées avec ou sans neutralisation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-      color.legend.labels<-seq(1,dmax,by=4)
-      color.legend.labels<-paste(color.legend.labels,"h",sep='')
-      color.legend(1,0.5,1.03,-0.5,color.legend.labels,col,gradient="y")
-    }
-    
-  }
-})
-
-output$plotPoteau <- renderPlot({
+output$plotRankings <- renderPlot({
   v<-getInputValues()
   cv<-getComputedValues()
   m<-matrix(c(1,2,3,4),2,2,byrow=TRUE)
@@ -851,16 +744,11 @@ output$uiMain <- renderUI({
               #)
               ),
               tabPanel(
-                tr("GainOrLoose"),
-                plotOutput("plotPoteau",height=700),
+                tr("Rankings"),
+                plotOutput("plotRankings",height=700),
                 value=6
               ),
-              tabPanel(
-                'Neutralisation',
-                plotOutput("plotNeutral",height=700),
-                value=7
-              ),
-              
+            
               tabPanel(
                 tr("Datas"),
                 dataTableOutput('Datas'),
