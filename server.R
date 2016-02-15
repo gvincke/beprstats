@@ -159,14 +159,11 @@ shinyServer(function(input, output, session) {
     
     races<-subset(races,name %in% v$races)
     files<-list("empty.csv")
-    #results <- read.csv("data/results.csv", sep=",", dec=".")
+
     # Import all editions of this race to allow summary to be active
     if(v$races!="empty" ){#& v$editions== "empty"
       files <- list.files(path = "./data/results",pattern = paste("*-",races$id,"-[[:digit:]]{1}.csv",sep=""))
   
-  #     if(v$races!="empty" & v$editions != "empty") {
-  #       files <- list.files(path = "./data/results",pattern = paste(v$editions,"-",races$id,"-[[:digit:]]{1}.csv",sep=""))
-  #     }
       # First apply read.csv, then rbind
       results <- do.call(rbind, lapply(files, function(x) read.csv(paste(".","data","results",x,sep="/"), sep=",", dec=".")))
       results$speedkmh<-(results$speed/1000)*60
@@ -293,11 +290,6 @@ shinyServer(function(input, output, session) {
         boxplot(speedtoplot~agetoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Age (années)",main="Distribution des vitesses par classe d'age")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
       }
       
-      #reg <- lm(cv$data$speed~cv$data$distkm)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
-      #abline(reg,col="blue")#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
-      #http://stackoverflow.com/questions/24173468/r-print-equation-of-linear-regression-on-the-plot-itself
-      #https://stat.ethz.ch/pipermail/r-help/2007-November/146285.html (confidence interval)
-      
       #catnb
       N0<-races[races$date == v$editions & races$name==v$races, "cn0"]
       N1<-races[races$date == v$editions & races$name==v$races, "cn1"]
@@ -338,7 +330,6 @@ output$plotDistance <- renderPlot({
 
   #catmax<-max(cv$data$cat, na.rm=TRUE)
   par(bty="n")#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html mais je commente oma = c(1, 1, 4, 1),mar=c(1,1,1,1), sinon on ne vois plus les labels
-
   
   if(v$races!="empty" & v$editions!="empty"){
     if(v$speedscale=='man'){
@@ -370,9 +361,7 @@ output$plotDistance <- renderPlot({
       reg <- lm(cv$data$speedtoplot~cv$data$distkm)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
       abline(coef(reg),col="gray50",lwd=2)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
       abline(coef(reg),col="black",lwd=1,lty=2)
-      #text(max(cv$data$distkm),(max(cv$data$distkm)*coef(reg)[2]+coef(reg)[1])*1.01,paste(tr('Speed'),"=",round(coef(reg)[1],3),"+",round(coef(reg)[2],3),tr('Distance'),sep=""),pos=2,col='blue')
-      text(max(cv$data$distkm),(max(cv$data$distkm)*coef(reg)[2]+coef(reg)[1])*1.02,bquote(.(tr('Slope')) == .(round(coef(reg)[2],3)) ~~ R^2 == .(round(summary(reg)$r.squared,2))),pos=2,col='gray50',cex=1.5)
-      
+      text(max(cv$data$distkm),(max(cv$data$distkm)*coef(reg)[2]+coef(reg)[1])*1.02,bquote(.(tr('Slope')) == .(round(coef(reg)[2],3)) ~~ R^2 == .(round(summary(reg)$r.squared,2))),pos=2,col='gray50',cex=1.5) 
     }
 
     if(v$distfactors=='unselected'){
@@ -398,7 +387,6 @@ output$plotDistance <- renderPlot({
       cv$data$agetoplot <- factor(cv$data$age,levels = ages)
       col<-rainbow(length(ages))
       for(i in 1:length(ages)){
-        #a<-as.character(ages[i])
         sub.data<-subset(cv$data,age %in% c(ages[i]))
         points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=col[i])
       }
@@ -408,27 +396,7 @@ output$plotDistance <- renderPlot({
       legend('top',legend = ages,col=col,pch=20,title = tr('PigeonsAge'),xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
     }
     
-    if(v$distfactors=='date'){#Baser sur jconstat et non les dates !! C'est plus parlant et c'est plus facile de créer une liste de couleur fixe
-      
-#       dateconstats<-sort(factor(unique(cv$data$dateconstat)))
-#       col<-rainbow(length(dateconstats))
-#       for(i in 1:length(dateconstats)){
-#         dc<-as.character(dateconstats[i])
-#         sub.data<-subset(cv$data,dateconstat %in% c(dc))
-#         points(sub.data$distkm,sub.data$speed,pch=20,col=col[i])
-#         if(v$lm==TRUE & nrow(sub.data)>1){
-#           reg <- lm(sub.data$speed~sub.data$distkm)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
-#           abline(coef(reg),col=col[i],lwd=2)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
-#           abline(coef(reg),col='black',lwd=1,lty=2)#http://www.ats.ucla.edu/stat/r/faq/scatter.htm
-#           text(max(sub.data$distkm),(max(sub.data$distkm)*coef(reg)[2]+coef(reg)[1])*1.02,bquote(.(tr('Slope')) == .(round(coef(reg)[2],3)) ~~ R^2 == .(round(summary(reg)$r.squared,2))),pos=2,col='black',cex=1.5)# ,srt=(round(coef(reg)[2],2)*(180*pi))+180 : ne marche que dans une graphique carré, sinon la paralaxe pose problème : de plus il faut des unités ou 1x = 1y car les degrés de rotation sont absolut, et non dépendnat du système de coordonnées || ceci remet à l'horizontal ??? ,srt=atan2(max(sub.data$distkm),(max(sub.data$distkm)*coef(reg)[2]+coef(reg)[1])*1.02)*(pi/180)  || voir https://stat.ethz.ch/pipermail/r-help/2006-February/087559.html
-#         }
-#       }
-#       par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-#       plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses par unité de distance")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-#       legend('top',legend = dateconstats,col=col,pch=20,title=tr('ClockingDate'),horiz=TRUE)
-      
-      #jmax<-max(cv$data$jconstat, na.rm=TRUE)
-      j<-c(0:4)
+    if(v$distfactors=='date'){#Baser sur jconstat et non les dates !! C'est plus parlant et c'est plus facile de créer une liste de couleur fixe      j<-c(0:4)
       cv$data$jtoplot <- factor(cv$data$jconstat,levels = j)
       col<-rainbow(length(j))
       for(i in 1:length(j)){
@@ -447,20 +415,7 @@ output$plotDistance <- renderPlot({
       legend('top',legend = j+1,col=col,pch=20,title = tr('ClockingDay'),xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
       
     }
-    
-#     if(v$distfactors=='date'){#travailler sur les j constats pour avoir toutes les valeurs possibles des dates? : non si la date du j0 n'est pas dans la liste elle ne sera pas trouvée : jconstat permet seulement de jouer sur les couleurs
-#       dateconstats<-sort(factor(unique(cv$data$dateconstat)))
-#       col<-rainbow(length(dateconstats))
-#       for(i in 1:length(dateconstats)){
-#         dc<-as.character(dateconstats[i])
-#         sub.data<-subset(cv$data,dateconstat %in% c(dc))
-#         points(sub.data$distkm,sub.data$speed,pch=20,col=col[i])
-#       }
-#       par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-#       plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses par unité de distance")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-#       legend('top',legend = dateconstats,col=col,pch=20,title=tr('ClockingDate'),horiz=TRUE)
-#     }
-    
+  
       if(v$distfactors=='duration'){
         if(v$speedneutral=="y"){
           dmax<-ceiling(max(cv$data$flightduration, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
@@ -485,23 +440,7 @@ output$plotDistance <- renderPlot({
         color.legend.labels<-seq(1,dmax,by=4)
         color.legend.labels<-paste(color.legend.labels,"h",sep='')
         color.legend(1,1,1.03,0,color.legend.labels,col,gradient="y")
-      }
-    
-#     distkm<-cv$data$distkm
-#     newx <- seq(min(distkm), max(distkm) )#((max(distkm)-min(distkm))/(length(distkm)-1))
-#     prd<-predict(reg,newdata=data.frame(distkm = newx),interval = c("confidence"))
-#     lines(newx,prd[,2],col="red",lty=2)
-#     lines(newx,prd[,3],col="red",lty=2)
-    
-    #http://stackoverflow.com/questions/24173468/r-print-equation-of-linear-regression-on-the-plot-itself
-    #https://stat.ethz.ch/pipermail/r-help/2007-November/146285.html (confidence interval)
-    #http://r-eco-evo.blogspot.be/2011/01/confidence-intervals-for-regression.html
-
-#http://www.r-bloggers.com/heatmap-tables-with-ggplot2/
-#http://stackoverflow.com/questions/22841960/creating-a-calendar-heatmap-for-number-of-events-that-occured-at-a-time-day-of-w
-#http://stackoverflow.com/questions/32119749/recreating-frequency-heatmap-in-r
-
-  
+      }  
   }
 
   if(v$distfactors=='neutral'){
