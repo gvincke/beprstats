@@ -452,7 +452,6 @@ output$plotDistance <- renderPlot({
     par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
     plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de la date de constatation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
     legend('top',legend = c('Non','Oui'),col=col,pch=20,title = 'Constatation durant une neutralisation',xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
-    
   }
 
   if(v$distfactors=='gainorloose'){
