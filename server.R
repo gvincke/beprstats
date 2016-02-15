@@ -397,6 +397,7 @@ output$plotDistance <- renderPlot({
     }
     
     if(v$distfactors=='date'){#Baser sur jconstat et non les dates !! C'est plus parlant et c'est plus facile de créer une liste de couleur fixe      j<-c(0:4)
+      j<-c(0:4)
       cv$data$jtoplot <- factor(cv$data$jconstat,levels = j)
       col<-rainbow(length(j))
       for(i in 1:length(j)){
@@ -415,7 +416,7 @@ output$plotDistance <- renderPlot({
       legend('top',legend = j+1,col=col,pch=20,title = tr('ClockingDay'),xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
       
     }
-  
+    
       if(v$distfactors=='duration'){
         if(v$speedneutral=="y"){
           dmax<-ceiling(max(cv$data$flightduration, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
@@ -440,7 +441,7 @@ output$plotDistance <- renderPlot({
         color.legend.labels<-seq(1,dmax,by=4)
         color.legend.labels<-paste(color.legend.labels,"h",sep='')
         color.legend(1,1,1.03,0,color.legend.labels,col,gradient="y")
-      }  
+      }
   }
 
   if(v$distfactors=='neutral'){
@@ -452,6 +453,7 @@ output$plotDistance <- renderPlot({
     par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
     plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de la date de constatation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
     legend('top',legend = c('Non','Oui'),col=col,pch=20,title = 'Constatation durant une neutralisation',xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
+    
   }
 
   if(v$distfactors=='gainorloose'){
