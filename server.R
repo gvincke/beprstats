@@ -644,114 +644,167 @@ output$plotNeutral <- renderPlot({
 output$plotPoteau <- renderPlot({
   v<-getInputValues()
   cv<-getComputedValues()
-  m<-matrix(c(1,2,3),1,3,byrow=TRUE)
-  layout(m,width=c(1,1,1))
+  m<-matrix(c(1,2,3,4),2,2,byrow=TRUE)
+  layout(m,width=c(1,1,1,1))
+  #Plot avec titre et légende
+  par(bty="n")
+  plot(0,0,xlim=c(-1,1),ylim=c(-1,1),xaxt='n', yaxt='n',xlab='',ylab='',type='l',main='Comparaison des classements avec et sans gains et pertes')
+  text(0,1,'CO = Classement Officiel (vitesses calculées AVEC neutralisation, puis gains et pertes)')
+  if(v$speedneutral=='y'){
+    text(0,0.9,'CC AN = Classement selon les vitesses Calculées AVEC neutralisation')
+  } else {
+    text(0,0.9,'CC SN = Classement selon les vitesses Calculées SANS neutralisation')
+  }
+  
+  if(v$distfactors=='cat'){
+    cats<-c(0,1,2)
+    col<-c('red','orange','yellow')
+    legend('bottomright',legend = c(tr("Youngsters"), tr("Yearlings"),tr("Olds")),col=col,pch=20,title = tr('Category'))#,inset=c(-0.01,0)
+  }
+  if(v$distfactors=='age'){
+    agemax<-max(cv$data$age, na.rm=TRUE)
+    ages<-c(0:agemax)
+    col<-rainbow(length(ages))
+    legend('bottomright',legend = ages,col=col,pch=20,title = tr('PigeonsAge'),xpd=TRUE)#,inset=c(-0.01,0),,horiz=TRUE
+  }
+  if(v$distfactors=='date'){
+    days<-c(0:4)
+    col<-rainbow(length(days))
+    legend('bottomright',legend = days+1,col=col,pch=20,title = tr('ClockingDay'))#,inset=c(-0.01,0),horiz=TRUE,,xpd=TRUE
+  }
+  if(v$distfactors=='duration'){
+    if(v$speedneutral=="y"){
+      dmax<-ceiling(max(cv$data$flightduration, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
+      d<-c(1:dmax)
+      col<-rainbow(dmax)#pas length(d) car on exclu le 0
+    } else {
+      dmax<-ceiling(max(cv$data$flightdurationWN, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
+      d<-c(1:dmax)
+      col<-rainbow(dmax)#pas length(d) car on exclu le 0
+    }
+    color.legend.labels<-seq(1,dmax,by=4)
+    color.legend.labels<-paste(color.legend.labels,"h",sep='')
+    color.legend(0.97,0.75,1,-1,color.legend.labels,col,gradient="y")
+    text(0.8,-0.015,"Durée du vol (en heures)",srt=90)#,srt=90,pos=2
+  }
+  if(v$distfactors=='neutral'){
+    col<-c('gray90','red')
+    legend('bottomright',legend = c('Non','Oui'),col=col,pch=20,title = 'Constatation durant une neutralisation')#,inset=c(-0.01,0) 
+  }
+  if(v$distfactors=='gainorloose'){
+    legend('bottomright',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement')#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
+  }
+  
   for(i in 0:2){# ne marche pas à cause d ela supperposition des plots pour mettre la légende dans la marge : recréer chaque plot indépendant et mettre légende dans un 4ème tout petit plot et jouer avec les layouts plutôt qu'avec les supperpositions
     par(bty="n",pty="s")#pty="s" force le plot à être carré ,oma = c(1, 1, 4, 1),mar=c(4,2,1,1) #,oma = c(1,1,3,4),mar=c(1,1,4,1)
-    sub.data<-subset(cv$data,cat == i)
-    if(v$races!="empty" & v$editions!="empty" & nrow(sub.data)>0){#reverse y axis : https://stat.ethz.ch/pipermail/r-help/2005-December/084726.html
-      if(v$speedneutral=='y'){
-        plot(sub.data$catpos,sub.data$catrank,ylim=rev(range(sub.data$catrank)),xlab='',ylab='Classement selon les vitesses calculées AVEC neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
-      } else {
-        plot(sub.data$catpos,sub.data$catrankWN,ylim=rev(range(sub.data$catrankWN)),xlab='',ylab='Classement selon les vitesses calculées SANS neutralisation',main='',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
-      }
-      axis(3)# Draw the x axis
-      axis(2)# Draw the y axis
-      mtext('Classement officiel (vitesses calculées AVEC neutralisation, puis poteau)', side=3, line=3)#http://stackoverflow.com/questions/12302366/moving-axes-labels-in-r
-
-      if(v$distfactors=='age'){
-        agemax<-max(sub.data$age, na.rm=TRUE)
-        ages<-c(0:agemax)
-        sub.data$agetoplot <- factor(sub.data$age,levels = ages)
-        col<-rainbow(length(ages))
-        for(i in 1:length(ages)){
-          sub.data<-subset(sub.data,age %in% c(ages[i]))
-          if(v$speedneutral=='y'){
-            points(sub.data$catpos,sub.data$catrank,pch=20,col=col[i])
-          } else {
-            points(sub.data$catpos,sub.data$catrankWN,pch=20,col=col[i])
-          }
-        }
-        
-        lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
-        legend('right',legend = ages,col=col,pch=20,title = tr('PigeonsAge'),xpd=TRUE)#,inset=c(-0.01,0),,horiz=TRUE
-      }
-      
-      if(v$distfactors=='date'){
-        j<-c(0:4)
-        sub.data$jtoplot <- factor(sub.data$jconstat,levels = j)
-        col<-rainbow(length(j))
-        for(i in 1:length(j)){
-          sub.data<-subset(sub.data,jconstat %in% c(j[i]))
-          if(v$speedneutral=='y'){
-            points(sub.data$catpos,sub.data$catrank,pch=20,col=col[i])
-          } else {
-            points(sub.data$catpos,sub.data$catrankWN,pch=20,col=col[i])
-          }
-        }
-        
-        lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
-        legend('right',legend = j+1,col=col,pch=20,title = tr('ClockingDay'),xpd=TRUE)#,inset=c(-0.01,0),horiz=TRUE
-      }
-      
-      if(v$distfactors=='duration'){
-        if(v$speedneutral=="y"){
-          dmax<-ceiling(max(sub.data$flightduration, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
-          d<-c(1:dmax)
-          col<-rainbow(dmax)#pas length(d) car on exclu le 0
-          for(i in 1:dmax){#pas length(d) car on exclu le 0
-            sub.data<-subset(sub.data,flightduration <= d[i]*60*60 & flightduration > d[i-1]*60*60)
-            points(sub.data$catpos,sub.data$catrank,pch=20,col=col[i])
-          }
-        } else {
-          dmax<-ceiling(max(sub.data$flightdurationWN, na.rm=TRUE)/60/60)#arrondir à l'heure supérieure
-          d<-c(1:dmax)
-          col<-rainbow(dmax)#pas length(d) car on exclu le 0
-          for(i in 1:dmax){#pas length(d) car on exclu le 0
-            sub.data<-subset(sub.data,flightdurationWN <= d[i]*60*60 & flightdurationWN > d[i-1]*60*60)
-            points(sub.data$catpos,sub.data$catrankWN,pch=20,col=col[i])
-          }
-        }
-        
-        lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
-        
-        color.legend.labels<-seq(1,dmax,by=4)
-        color.legend.labels<-paste(color.legend.labels,"h",sep='')
-        color.legend(1,0.5,1.03,-0.5,color.legend.labels,col,gradient="y")
-      }
-
-      if(v$distfactors=='gainorloose'){
+    if(v$races!="empty" & v$editions!="empty"){
+      sub.data<-subset(cv$data,cat == i)
+      if(nrow(sub.data)>0){#reverse y axis : https://stat.ethz.ch/pipermail/r-help/2005-December/084726.html
         if(v$speedneutral=='y'){
-          sub.sub.data<-subset(sub.data,catposcatrankDiff < 0)
-          points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col='red')
-          
-          sub.sub.data<-subset(sub.data,catposcatrankDiff > 0)
-          points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col='green')
-          
-          sub.sub.data<-subset(sub.data,catposcatrankDiff == 0)
-          points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col='yellow')
+          plot(sub.data$catpos,sub.data$catrank,ylim=rev(range(sub.data$catrank)),xlab='',ylab='CC AN',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
         } else {
-          sub.sub.data<-subset(sub.data,catposcatrankWNDiff < 0)
-          points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col='red')
-          
-          sub.sub.data<-subset(sub.data,catposcatrankWNDiff > 0)
-          points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col='green')
-          
-          sub.sub.data<-subset(sub.data,catposcatrankWNDiff == 0)
-          points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col='yellow')
+          plot(sub.data$catpos,sub.data$catrankWN,ylim=rev(range(sub.data$catrankWN)),xlab='',ylab='CC SN',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
+        }
+        if(v$distfactors=='cat'){
+          for(j in 1:3){
+            sub.sub.data<-subset(sub.data,cat %in% c(cats[j]))
+            if(v$speedneutral=='y'){
+              points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col=col[j])
+            } else {
+              points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col=col[j])
+            }
+          }
+        }
+        if(v$distfactors=='age'){
+          for(j in 1:length(ages)){
+            sub.sub.data<-subset(sub.data,age %in% c(ages[j]))
+            if(v$speedneutral=='y'){
+              points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col=col[j])
+            } else {
+              points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col=col[j])
+            }
+          }
         }
         
+        if(v$distfactors=='date'){
+          for(j in 1:length(days)){
+            sub.sub.data<-subset(sub.data,jconstat %in% c(days[j]))
+            if(v$speedneutral=='y'){
+              points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col=col[j])
+            } else {
+              points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col=col[j])
+            }
+          }
+        }
+        
+        if(v$distfactors=='duration'){
+          if(v$speedneutral=="y"){
+            for(j in 1:dmax){#pas length(d) car on exclu le 0
+              sub.sub.data<-subset(sub.data,flightduration <= d[j]*60*60 & flightduration > d[j-1]*60*60)
+              points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col=col[j])
+            }
+          } else {
+            for(j in 1:dmax){#pas length(d) car on exclu le 0
+              sub.sub.data<-subset(sub.data,flightdurationWN <= d[j]*60*60 & flightdurationWN > d[j-1]*60*60)
+              points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col=col[j])
+            }
+          }
+        }
+        if(v$distfactors=='neutral'){
+          if(v$speedneutral=="y"){
+            for(j in c(0,1)){
+              sub.sub.data<-subset(sub.data,inneutral == as.factor(j))#inneutral = 0 ou 1 selon que l'heure de constatation est dans la neutralisation ou pas
+              points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col=col[j+1])
+            }
+          } else {
+            for(j in c(0,1)){
+              sub.sub.data<-subset(sub.data,inneutral == as.factor(j))#inneutral = 0 ou 1 selon que l'heure de constatation est dans la neutralisation ou pas
+              points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col=col[j+1])
+            }
+          }
+        }
+  
+        if(v$distfactors=='gainorloose'){
+          if(v$speedneutral=='y'){
+            sub.sub.data<-subset(sub.data,catposcatrankDiff < 0)
+            points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col='red')
+            
+            sub.sub.data<-subset(sub.data,catposcatrankDiff > 0)
+            points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col='green')
+            
+            sub.sub.data<-subset(sub.data,catposcatrankDiff == 0)
+            points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col='yellow')
+          } else {
+            sub.sub.data<-subset(sub.data,catposcatrankWNDiff < 0)
+            points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col='red')
+            
+            sub.sub.data<-subset(sub.data,catposcatrankWNDiff > 0)
+            points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col='green')
+            
+            sub.sub.data<-subset(sub.data,catposcatrankWNDiff == 0)
+            points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col='yellow')
+          }
+        }
         lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
-        legend('right',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement',xpd=TRUE)#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
+      } else { # Empty plot if there is no pigeons in this category
+        par(bty="n",pty="s")
+        plot(0,0,ylim=rev(range(cv$data$catrankWN)),xlim=range(cv$data$catrank),xlab='',ylab='CC SN*',main='',pch=20,col='white',axes=FALSE)
       }
     } else {
       par(bty="n",pty="s")
-      plot(0,0,ylim=rev(range(cv$data$catrankWN)),xlim=range(cv$data$catrank),xlab='',ylab='Classement selon les vitesses calculées SANS neutralisation',main='',pch=20,col='white',axes=FALSE)
-      axis(3)# Draw the x axis
-      axis(2)# Draw the y axis
-      mtext('Classement officiel (vitesses calculées AVEC neutralisation, puis poteau)', side=3, line=3)#http://stackoverflow.com/questions/12302366/moving-axes-labels-in-r
-      
+      plot(0,0,ylim=c(0,1000),xlim=c(0,1000),xlab='',ylab='CC SN',main='',pch=20,col='white',axes=FALSE)
     }
+
+    axis(3)# Draw the x axis
+    axis(2)# Draw the y axis
+    mtext('CO', side=3, line=3)#http://stackoverflow.com/questions/12302366/moving-axes-labels-in-r
+    if(i == 0){title=tr('Youngsters')}
+    if(i == 1){title=tr('Yearlings')}
+    if(i == 2){title=tr('Olds')}
+    # Position of plot title in the origin corner : http://r.789695.n4.nabble.com/Positioning-text-in-top-left-corner-of-plot-td831723.html
+    par(xpd=T)
+    text(-0.15*(par("usr")[2]-par("usr")[1]),par("usr")[4]+0.14*(par("usr")[4]-par("usr")[3]),title,font=2,cex=1.5)
+    par(xpd=F)
   }
 })
 
