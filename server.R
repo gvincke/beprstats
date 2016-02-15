@@ -684,17 +684,16 @@ output$uiSBAdditionalSettingsTitle <- renderUI({
 
 output$uiSBPigeonsSpeed <- renderUI({
   fluidRow(column(12,
-                  h5(HTML(paste(tr("PigeonsSpeed"),":",sep=" "))),
-                  selectInput("speedneutral", label=HTML(paste(tr("CalculatedWithNeutral")," :",sep="")), choices=getYesNoSelection(),selected="auto",selectize=FALSE),
-                  selectInput("speedloosegain", label=HTML(paste(tr("800mmIncluded")," :",sep="")), choices=getYesNoSelection(),selected="auto",selectize=FALSE),
-                  selectInput("speedscale", label=HTML(paste(tr("Scale")," :",sep="")), choices=getSpeedScaleSelection(),selected="auto",selectize=FALSE),
-                  conditionalPanel(
-                    condition = "input.speedscale == 'man'",
-                    sliderInput("speed", label = "", min = 200, max = 2200, step=50, value = c(600, 1200))
-                  ),
-                  h5(HTML(paste("Sélection des pigeons",":",sep=" "))),
-                  selectInput("racecat", label=HTML(paste(tr("Category")," :",sep="")), choices=getCategorySelection(),selected="auto",selectize=FALSE)
-                
+      h5(HTML(paste("Sélection des pigeons",":",sep=" "))),
+      selectInput("racecat", label=HTML(paste(tr("Category")," :",sep="")), choices=getCategorySelection(),selected="auto",selectize=FALSE),
+      h5(HTML(paste(tr("PigeonsSpeed"),":",sep=" "))),
+      selectInput("speedscale", label=HTML(paste(tr("Scale")," :",sep="")), choices=getSpeedScaleSelection(),selected="auto",selectize=FALSE),
+      conditionalPanel(
+        condition = "input.speedscale == 'man'",
+        sliderInput("speed", label = "", min = 200, max = 2200, step=50, value = c(600, 1200))
+      ),
+      selectInput("speedloosegain", label=HTML(paste(tr("800mmIncluded")," :",sep="")), choices=getYesNoSelection(),selected="auto",selectize=FALSE),
+      selectInput("speedneutral", label=HTML(paste(tr("CalculatedWithNeutral")," :",sep="")), choices=getYesNoSelection(),selected="auto",selectize=FALSE)          
   ))
 })
 

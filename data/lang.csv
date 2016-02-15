@@ -49,6 +49,6 @@ ShowHourLines	Afficher les lignes des heures de vol	Show lines of flight hours 	
 ShowLm	Tracer la ou les ligne(s) de régression linéaire	Plot linear regression line(s)	Plot lineaire regressielijn(en)
 Slope	Pente	Slope	Helling
 CalculatedWithNeutral	Calculée avec les neutralisations	Calculated with neutralizations	Berekend neutralisaties
-800mmIncluded	Valeurs inférieures à 800m/min comprises	Including values below 800 m/min	Waaronder waarden beneden 800 m/min
+800mmIncluded	Valeurs <800m/min comprises	Including values <800 m/min	Waaronder waarden <800 m/min
 GainOrLoose	Gain ou perte	Gain or loose	Winst of verlies
 Rankings	Classements	Rankings	Rankings
