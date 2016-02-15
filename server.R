@@ -40,7 +40,7 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 # Titres des graphiques en varaible puis paste pour le complément (plotDistance par exemple)
 # Barcelone 2010 et 2009 : vérifier que les deux premiers ne sont pas avec ds vitesses calculées trop grandes du a un jours de ocntatation erronée, car sortent du poteau !! En fait vérifier chaque cocours que le classement soit bien respecté, car dans les barcelone il y a toujours 3 - 4 pigeons issus du poteau qui ont des vitesses énormes dues à un jour de constatation erroné !
 # résultats nationaux Belgique :  toutes les femelles sont doublées car c'est gratuit : compéraison des sexes est alors possible !
-# Supprimer le plotNeutral, et le fisionner avec le plot Poteau pour en faire un plot Classements ou on peut sélectionner ce qu'on met en x (catpos ou rank) et ce qu'on met en y (rank ou rankWN)
+
 #Done :
 # Hypothese Philippens : poteau = pour réduire impact de la distance en dessous de 800m/min donc identifier dans le plot de distance l'effet du poteau, avec en rouge ceux qui perdent des places et en vert ceux qui en gagnent. Normalement sous le poteau je devrais trouver du vert, et au delà du rouge ... Confirmé par Sébastien casaerts et par le CFW : 800m/min est la vitesse minimale de vol du pigeon. Donc en dessous de cette vitesse il s'est OBLIGATOIREMENT arrété, et le but du poteau est de limiter cet impact d'un arrêt, qui est d'autant plus grand que la distance est longue
 # Créer liste des concours avec leur caractéristiques (neutralisations, nombre de pigeons par catégories, etc)
@@ -50,6 +50,7 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 # Ajouter la catégorie dans les facteurs de variation : et une select pour n'affichier qu'une seule catégorie quand nécéssaire
 # http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
 # Gain et Pertes : faire for i dans les catégories existantes et afficher autant de plot que de catégorie
+# Supprimer le plotNeutral, et le fisionner avec le plot Poteau pour en faire un plot Classements ou on peut sélectionner ce qu'on met en x (catpos ou rank) et ce qu'on met en y (rank ou rankWN)
 
 shinyServer(function(input, output, session) {
   # https://gist.github.com/trestletech/9926129
@@ -147,6 +148,21 @@ shinyServer(function(input, output, session) {
       "distfactors",
       choices=l)
   })
+  
+  RankingMethods <- read.delim("data/lang-rankingmethods.csv", header = TRUE, sep = "\t", as.is = TRUE) 
+  row.names(RankingMethods)<-RankingMethods$key #to have key in both row.names and $key. If we whant only as row.names add row.names=1 to read.delim
+  observe({#http://stackoverflow.com/questions/28119964/dynamic-input-selector-based-on-uploaded-data
+    l<-list()
+#     l<-c(" "="unselected",l)
+    for(i in 1:nrow(RankingMethods)){
+      l[[RankingMethods[[input$language]][i]]]<-RankingMethods$key[i]
+    }
+    updateSelectInput(#http://www.inside-r.org/packages/cran/shiny/docs/updateSelectInput
+      session,
+      "rankingmethods",
+      choices=l)
+  })
+  
 
   getInputValues<-reactive({
     return(input)#collect all inputs
@@ -482,12 +498,20 @@ output$plotRankings <- renderPlot({
   layout(m,width=c(1,1,1,1))
   #Plot avec titre et légende
   par(bty="n")
-  plot(0,0,xlim=c(-1,1),ylim=c(-1,1),xaxt='n', yaxt='n',xlab='',ylab='',type='l',main='Comparaison des classements avec et sans gains et pertes')
-  text(0,1,'CO = Classement Officiel (vitesses calculées AVEC neutralisation, puis gains et pertes)')
-  if(v$speedneutral=='y'){
-    text(0,0.9,'CC AN = Classement selon les vitesses Calculées AVEC neutralisation')
+  plot(0,0,xlim=c(-1,1),ylim=c(-1,1),xaxt='n', yaxt='n',xlab='',ylab='',type='l',main='Comparaison des classements')
+  if(v$rankingmethods=='co'){
+    text(0,1,tr('RankingMethodCO'))
+    xlab<-tr('RankingMethodCOLabel')
   } else {
-    text(0,0.9,'CC SN = Classement selon les vitesses Calculées SANS neutralisation')
+    text(0,1,tr('RankingMethodCCAN'))
+    xlab<-tr('RankingMethodCCANLabel')
+  }
+  if(v$speedneutral=='y'){
+    text(0,0.9,tr('RankingMethodCCAN'))
+    ylab<-tr('RankingMethodCCANLabel')
+  } else {
+    text(0,0.9,tr('RankingMethodCCSN'))
+    ylab<-tr('RankingMethodCCSNLabel')
   }
   
   if(v$distfactors=='cat'){
@@ -534,28 +558,31 @@ output$plotRankings <- renderPlot({
     if(v$races!="empty" & v$editions!="empty"){
       sub.data<-subset(cv$data,cat == i)
       if(nrow(sub.data)>0){#reverse y axis : https://stat.ethz.ch/pipermail/r-help/2005-December/084726.html
+        if(v$rankingmethods=='co'){x<-sub.data$catpos}else{x<-sub.data$catrank}
         if(v$speedneutral=='y'){
-          plot(sub.data$catpos,sub.data$catrank,ylim=rev(range(sub.data$catrank)),xlab='',ylab='CC AN',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
+          plot(x,sub.data$catrank,ylim=rev(range(sub.data$catrank)),xlab='',ylab=ylab,pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
         } else {
-          plot(sub.data$catpos,sub.data$catrankWN,ylim=rev(range(sub.data$catrankWN)),xlab='',ylab='CC SN',pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
+          plot(x,sub.data$catrankWN,ylim=rev(range(sub.data$catrankWN)),xlab='',ylab=ylab,pch=20,col='gray50', axes=FALSE)      #TODO : choix entre un scatterplot coloré ou des lignes verticales !
         }
         if(v$distfactors=='cat'){
           for(j in 1:3){
             sub.sub.data<-subset(sub.data,cat %in% c(cats[j]))
+            if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
             if(v$speedneutral=='y'){
-              points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col=col[j])
+              points(x,sub.sub.data$catrank,pch=20,col=col[j])
             } else {
-              points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col=col[j])
+              points(x,sub.sub.data$catrankWN,pch=20,col=col[j])
             }
           }
         }
         if(v$distfactors=='age'){
           for(j in 1:length(ages)){
             sub.sub.data<-subset(sub.data,age %in% c(ages[j]))
+            if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
             if(v$speedneutral=='y'){
-              points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col=col[j])
+              points(x,sub.sub.data$catrank,pch=20,col=col[j])
             } else {
-              points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col=col[j])
+              points(x,sub.sub.data$catrankWN,pch=20,col=col[j])
             }
           }
         }
@@ -563,10 +590,11 @@ output$plotRankings <- renderPlot({
         if(v$distfactors=='date'){
           for(j in 1:length(days)){
             sub.sub.data<-subset(sub.data,jconstat %in% c(days[j]))
+            if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
             if(v$speedneutral=='y'){
-              points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col=col[j])
+              points(x,sub.sub.data$catrank,pch=20,col=col[j])
             } else {
-              points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col=col[j])
+              points(x,sub.sub.data$catrankWN,pch=20,col=col[j])
             }
           }
         }
@@ -575,12 +603,14 @@ output$plotRankings <- renderPlot({
           if(v$speedneutral=="y"){
             for(j in 1:dmax){#pas length(d) car on exclu le 0
               sub.sub.data<-subset(sub.data,flightduration <= d[j]*60*60 & flightduration > d[j-1]*60*60)
-              points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col=col[j])
+              if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+              points(x,sub.sub.data$catrank,pch=20,col=col[j])
             }
           } else {
             for(j in 1:dmax){#pas length(d) car on exclu le 0
               sub.sub.data<-subset(sub.data,flightdurationWN <= d[j]*60*60 & flightdurationWN > d[j-1]*60*60)
-              points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col=col[j])
+              if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+              points(x,sub.sub.data$catrankWN,pch=20,col=col[j])
             }
           }
         }
@@ -588,12 +618,14 @@ output$plotRankings <- renderPlot({
           if(v$speedneutral=="y"){
             for(j in c(0,1)){
               sub.sub.data<-subset(sub.data,inneutral == as.factor(j))#inneutral = 0 ou 1 selon que l'heure de constatation est dans la neutralisation ou pas
-              points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col=col[j+1])
+              if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+              points(x,sub.sub.data$catrank,pch=20,col=col[j+1])
             }
           } else {
             for(j in c(0,1)){
               sub.sub.data<-subset(sub.data,inneutral == as.factor(j))#inneutral = 0 ou 1 selon que l'heure de constatation est dans la neutralisation ou pas
-              points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col=col[j+1])
+              if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+              points(x,sub.sub.data$catrankWN,pch=20,col=col[j+1])
             }
           }
         }
@@ -601,37 +633,43 @@ output$plotRankings <- renderPlot({
         if(v$distfactors=='gainorloose'){
           if(v$speedneutral=='y'){
             sub.sub.data<-subset(sub.data,catposcatrankDiff < 0)
-            points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col='red')
+            if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+            points(x,sub.sub.data$catrank,pch=20,col='red')
             
             sub.sub.data<-subset(sub.data,catposcatrankDiff > 0)
-            points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col='green')
+            if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+            points(x,sub.sub.data$catrank,pch=20,col='green')
             
             sub.sub.data<-subset(sub.data,catposcatrankDiff == 0)
-            points(sub.sub.data$catpos,sub.sub.data$catrank,pch=20,col='yellow')
+            if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+            points(x,sub.sub.data$catrank,pch=20,col='yellow')
           } else {
             sub.sub.data<-subset(sub.data,catposcatrankWNDiff < 0)
-            points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col='red')
+            if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+            points(x,sub.sub.data$catrankWN,pch=20,col='red')
             
             sub.sub.data<-subset(sub.data,catposcatrankWNDiff > 0)
-            points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col='green')
+            if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+            points(x,sub.sub.data$catrankWN,pch=20,col='green')
             
             sub.sub.data<-subset(sub.data,catposcatrankWNDiff == 0)
-            points(sub.sub.data$catpos,sub.sub.data$catrankWN,pch=20,col='yellow')
+            if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+            points(x,sub.sub.data$catrankWN,pch=20,col='yellow')
           }
         }
         lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
       } else { # Empty plot if there is no pigeons in this category
         par(bty="n",pty="s")
-        plot(0,0,ylim=rev(range(cv$data$catrankWN)),xlim=range(cv$data$catrank),xlab='',ylab='CC SN*',main='',pch=20,col='white',axes=FALSE)
+        plot(0,0,ylim=rev(range(cv$data$catrankWN)),xlim=range(cv$data$catrank),xlab='',ylab=ylab,main='',pch=20,col='white',axes=FALSE)
       }
     } else {
       par(bty="n",pty="s")
-      plot(0,0,ylim=c(0,1000),xlim=c(0,1000),xlab='',ylab='CC SN',main='',pch=20,col='white',axes=FALSE)
+      plot(0,0,ylim=c(0,1000),xlim=c(0,1000),xlab='',ylab=ylab,main='',pch=20,col='white',axes=FALSE)
     }
 
     axis(3)# Draw the x axis
     axis(2)# Draw the y axis
-    mtext('CO', side=3, line=3)#http://stackoverflow.com/questions/12302366/moving-axes-labels-in-r
+    mtext(xlab, side=3, line=3)#http://stackoverflow.com/questions/12302366/moving-axes-labels-in-r
     if(i == 0){title=tr('Youngsters')}
     if(i == 1){title=tr('Yearlings')}
     if(i == 2){title=tr('Olds')}
@@ -721,7 +759,9 @@ output$uiSBLmLines <- renderUI({
   HTML(tr("ShowLm"))
 })
 
-
+output$uiSBRankingMethods <- renderUI({
+  strong(HTML(paste(tr("RankingMethod"),":",sep=" ")))
+})
 
 output$uiMain <- renderUI({
   tabsetPanel(id="Tabset",selected=1,

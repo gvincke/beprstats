@@ -52,3 +52,10 @@ CalculatedWithNeutral	Calculée avec les neutralisations	Calculated with neutral
 800mmIncluded	Valeurs <800m/min comprises	Including values <800 m/min	Waaronder waarden <800 m/min
 GainOrLoose	Gain ou perte	Gain or loose	Winst of verlies
 Rankings	Classements	Rankings	Rankings
+RankingMethod	Méthode de classement	Ranking method	Ranking methode
+RankingMethodCO	CO : Classement Officiel (vitesses calculées AVEC neutralisation, puis gains et pertes)	OR: Official Ranking (speeds calculated WITH neutralization, and gains and losses)	OR: Official Ranking (snelheden berekend MET neutralisatie, en winsten en verliezen)
+RankingMethodCCAN	CC  AN : Classement selon les vitesses Calculées AVEC neutralisation	CR WN : Ranking based uppon Calculated speeds WITH neutralization	BR MN : Ranking op basis van Bereken snelheden MET neutralisatie
+RankingMethodCCSN	CC  SN : Classement selon les vitesses Calculées SANS neutralisation	CR WON : Ranking based uppon Calculated speeds WITHout neutralization	BR ZN : Ranking op basis van Bereken snelheden ZONDER neutralisatie
+RankingMethodCOLabel	CO	OR	OR
+RankingMethodCCANLabel	CC  AN	CR WN	BR MN
+RankingMethodCCSNLabel	CC  SN	CR WON	BR ZN

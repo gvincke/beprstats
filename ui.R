@@ -57,6 +57,9 @@ shinyUI(navbarPage("Belgium Pigeon Racing Statistics",id="main",#http://shiny.rs
           conditionalPanel(condition = "input.distfactors=='date' | input.distfactors=='unselected'",
             checkboxInput("lm", label =uiOutput("uiSBLmLines"), value = FALSE)
           )
+        ),
+        conditionalPanel(condition = "input.Tabset==6",
+                         selectInput("rankingmethods", label=uiOutput("uiSBRankingMethods"), choices="",selectize=FALSE)
         )
       )
       ),
