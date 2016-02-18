@@ -168,20 +168,20 @@ shinyServer(function(input, output, session) {
     return(input)#collect all inputs
   })
 
+  getResults<-reactive({
+    race<-subset(races,name %in% input$races)
+    files <- list.files(path = "./data/rds",pattern = paste("*-",race$id,"-[[:digit:]]{1}.rds",sep=""))
+    result <- do.call(rbind, lapply(files, function(x) readRDS(paste(".","data","rds",x,sep="/"))))
+    return(result)
+  })
 
   getComputedValues<-reactive({
     v<-getInputValues() # get all values of input list
     cv<-list()#created empty computed values list
-    
-    races<-subset(races,name %in% v$races)
-    files<-list("empty.csv")
 
     # Import all editions of this race to allow summary to be active
     if(v$races!="empty" ){#& v$editions== "empty"
-      files <- list.files(path = "./data/results",pattern = paste("*-",races$id,"-[[:digit:]]{1}.csv",sep=""))
-  
-      # First apply read.csv, then rbind
-      results <- do.call(rbind, lapply(files, function(x) read.csv(paste(".","data","results",x,sep="/"), sep=",", dec=".")))
+      results<-getResults()
       results$speedkmh<-(results$speed/1000)*60
       
       cv$data<-results
