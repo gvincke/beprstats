@@ -1,0 +1,12 @@
+.shiny-progress .progress {
+	height:50px;
+}
+.shiny-progress .progress-text {
+  border: 1px solid #000;
+  width:500px;
+  right:80px;
+}
+.shiny-progress .progress-text .progress-message {
+  padding: 2px 0px 2px 18px;
+  background: transparent url(../img/time.png) left center no-repeat;
+}
