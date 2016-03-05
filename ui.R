@@ -41,7 +41,9 @@ shinyUI(navbarPage("Belgium Pigeon Racing Statistics",id="main",#http://shiny.rs
       wellPanel(
         uiOutput("uiSBRacesTitle"),
         selectInput(inputId="races",label=uiOutput("uiSBRaces"),choices="",selectize=FALSE,multiple=FALSE),#Label is translated, so have to be set in server.R, but the list must be set in UI.R to be setted before of server.R computation to be filled by Towns values : soit un select est défini ici avec choices ="" et un observe dans server.R le rempli par après; soit le select est directement défini dans server.R mais du coup ne peut être exploité par un script js
-        selectInput(inputId="editions",label=uiOutput("uiSBRacesEditions"),choices="",selectize=FALSE,multiple=FALSE),#Label is translated, so have to be set in server.R, but the list must be set in UI.R to be setted before of server.R computation to be filled by Towns values : soit un select est défini ici avec choices ="" et un observe dans server.R le rempli par après; soit le select est directement défini dans server.R mais du coup ne peut être exploité par un script js
+        conditionalPanel(condition = "input.Tabset!=1",
+        selectInput(inputId="editions",label=uiOutput("uiSBRacesEditions"),choices="",selectize=FALSE,multiple=FALSE)#Label is translated, so have to be set in server.R, but the list must be set in UI.R to be setted before of server.R computation to be filled by Towns values : soit un select est défini ici avec choices ="" et un observe dans server.R le rempli par après; soit le select est directement défini dans server.R mais du coup ne peut être exploité par un script js
+        ),
         uiOutput("uiSBRacesLocLink")
       ),
       wellPanel(
