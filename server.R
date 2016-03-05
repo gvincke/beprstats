@@ -38,7 +38,6 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 # Pour chaque facteur de variation dans le plot distance associer un plot de comptage des nombres par critères avec une répatition 3/4 1/4 conditionnelles (Afficher les nombres par catégorie) : ou ajouter les nombres dans les légendes !!! en face de chaque niveau de chaque facteur ?
 # Femelles : sexe = 0 pour sexe inconnu, et >0 = rank dans le doublage femelle ? (oui mais s'il y a plusieurs doublages ?)
 # Titres des graphiques en varaible puis paste pour le complément (plotDistance par exemple)
-# Barcelone 2010 et 2009 : vérifier que les deux premiers ne sont pas avec ds vitesses calculées trop grandes du a un jours de ocntatation erronée, car sortent du poteau !! En fait vérifier chaque cocours que le classement soit bien respecté, car dans les barcelone il y a toujours 3 - 4 pigeons issus du poteau qui ont des vitesses énormes dues à un jour de constatation erroné !
 # résultats nationaux Belgique :  toutes les femelles sont doublées car c'est gratuit : compéraison des sexes est alors possible !
 
 #Done :
@@ -51,6 +50,7 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 # http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
 # Gain et Pertes : faire for i dans les catégories existantes et afficher autant de plot que de catégorie
 # Supprimer le plotNeutral, et le fisionner avec le plot Poteau pour en faire un plot Classements ou on peut sélectionner ce qu'on met en x (catpos ou rank) et ce qu'on met en y (rank ou rankWN)
+# Barcelone 2010 et 2009 : vérifier que les deux premiers ne sont pas avec ds vitesses calculées trop grandes du a un jours de ocntatation erronée, car sortent du poteau !! En fait vérifier chaque cocours que le classement soit bien respecté, car dans les barcelone il y a toujours 3 - 4 pigeons issus du poteau qui ont des vitesses énormes dues à un jour de constatation erroné !
 
 shinyServer(function(input, output, session) {
   # https://gist.github.com/trestletech/9926129
@@ -229,7 +229,22 @@ shinyServer(function(input, output, session) {
       cv$data$racedate <- factor(cv$data$racedate)#http://stackoverflow.com/questions/1195826/drop-factor-levels-in-a-subsetted-data-frame
       cv$dataS$racedate <- factor(cv$dataS$racedate)#http://stackoverflow.com/questions/1195826/drop-factor-levels-in-a-subsetted-data-frame
       cv$data$distkm<-cv$data$dist/1000
-      cv$datatoshow<-subset(cv$data,select=c(ring,age,owner,location,racename,racedate,cat,catpos,ownerpos,dist,time,speed,speedkmh,rank,rankWN,rankDiff))
+      cv$datatoshow<-subset(cv$data,select=c(ring,age,owner,location,cat,catpos,ownerpos,dist,time,inneutral,speed,speedWN,rank,rankWN,catrankDiff))#,racename,racedate,,catposcatrankWNDiff
+      names(cv$datatoshow)[1]<-paste("Ring")
+      names(cv$datatoshow)[2]<-paste("Age")
+      names(cv$datatoshow)[3]<-paste("Owner")
+      names(cv$datatoshow)[4]<-paste("Location")
+      names(cv$datatoshow)[5]<-paste("C")#Cat
+      names(cv$datatoshow)[6]<-paste("CR")#Cat Rank
+      names(cv$datatoshow)[7]<-paste("OR")#Owner Rank
+      names(cv$datatoshow)[8]<-paste("Dist")
+      names(cv$datatoshow)[9]<-paste("Time")
+      names(cv$datatoshow)[10]<-paste("IN")#In Neutral
+      names(cv$datatoshow)[11]<-paste("S")#Speed
+      names(cv$datatoshow)[12]<-paste("SWN")#Speed Without Neutral
+      names(cv$datatoshow)[13]<-paste("R")#Rank
+      names(cv$datatoshow)[14]<-paste("RWN")#Rank Without Neutral
+      names(cv$datatoshow)[15]<-paste("CRD")#Cat Rank Diff
     }
     return(cv)
   })
@@ -237,6 +252,15 @@ shinyServer(function(input, output, session) {
   output$plotSummary <- renderPlot({
     v<-getInputValues()
     cv<-getComputedValues()
+    if(v$races=="empty"){
+      m<-matrix(c(1,2),2,1,byrow=TRUE)#matrix(c(1,1,2),3,1,byrow=TRUE)
+      layout(m,width=c(1,1))
+      par(bty="n")
+      plot(0,0,type='l',ylab="Vitesse (m/min)",xlab="Dates",main="Distribution des vitesses par édition",ylim=c(800,1200),xaxt="n")
+      text(0,1000,"Sélectionnez un concours dans la liste déroulante à gauche", col='red',cex=1.5)
+      plot(0,0,type='l',ylab="Nombre de pigeons",xlab="Dates",main="Nombre total de pigeons",ylim=c(0,1000),xaxt="n")
+    }
+    
     if(v$races!="empty"){
       withProgress(message = tr('ImportData'), value = 0, {
         m<-matrix(c(1,2),2,1,byrow=TRUE)#matrix(c(1,1,2),3,1,byrow=TRUE)
@@ -282,7 +306,29 @@ shinyServer(function(input, output, session) {
   output$plotCatAndAge <- renderPlot({
     v<-getInputValues()
     cv<-getComputedValues()
-
+    if(v$editions=='empty'){
+      m<-matrix(c(1,2,3,4,5,6),2,3,byrow=TRUE)
+      layout(m,width=c(1,1.5,4,1,1.5,4))
+      par(bty="n")
+      
+      m <- matrix( c(0,1),nrow=1,ncol=2)
+      dimnames(m) = list(c(),c("f1", "f2"))
+      boxplot(f1~f2,m,col="white",xaxt="n",xlab="",ylab="Vitesse (m/min)",ylim=c(800,1600),main="Distribution des vitesses")
+      
+      m <- matrix( c(0,0,0,1,2,3),nrow=3,ncol=2)
+      dimnames(m) = list(c("1","2","3"),c("f1", "f2"))
+      boxplot(f1~f2,m,col="white",ylab="Vitesse (m/min)",xlab="Catégorie",ylim=c(800,1600),main="Distribution des vitesses par catégorie",names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
+      
+      m <- matrix( c(0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,8),nrow=8,ncol=2)
+      dimnames(m) = list(c(),c("f1", "f2"))
+      boxplot(f1~f2,m,col="white",ylab="Vitesse (m/min)",xlab="Age (années)",ylim=c(800,1600),main="Distribution des vitesses par classe d'age")
+      text(4.5,1200,"Sélectionnez un concours ET une de ses éditions dans les listes déroulantes à gauche",col='red',cex=2)
+      
+      barplot(c(0),xaxt="n",xlab="",ylab="Nombre de pigeons",main="Nombre total de pigeons",ylim=c(0,1000))
+      barplot(c(0,0,0),xlab="Catégorie",ylab="Nombre de pigeons",main="Nombre de pigeons par catégorie",ylim=c(0,1000),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
+      barplot(c(0,0,0,0,0,0,0,0),xlab="Age (années)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe d'age",names=c(1:8),ylim=c(0,1000))
+      
+    }
 
     if(v$races!="empty" & v$editions!="empty"){
       withProgress(message = tr('ImportData'), value = 0, {
@@ -331,20 +377,24 @@ shinyServer(function(input, output, session) {
         m<-as.matrix(structure(list(n), class = "data.frame", .Names=v$editions, row.names=c(NA,-2L)))
         bp<-barplot(m, xlab=" ",xaxt="n",ylab="Nombre de pigeons",main="Nombre total de pigeons",col=c('gray','green'),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))))
         text(x = bp, y = m[1,]+m[2,], label = m[1,]+m[2,], pos = 3, cex = 1, col = "red")## Add text at top of bars
-        text(x = bp, y = m[1,]+(m[2,]/2), label = m[2,], cex = 1, col = "black")## Add text at top of bars
-        text(x = bp, y = m[1,]/2, label = m[1,], cex = 1, col = "black")## Add text at top of bars
+        if(m[2,]>0){text(x = bp, y = m[1,]+(m[2,]/2), label = m[2,], cex = 1, col = "black")}## Add text at top of bars
+        if(m[1,]>0){text(x = bp, y = m[1,]/2, label = m[1,], cex = 1, col = "black")}## Add text at top of bars
         incProgress(1/6, detail = "Plotting barplot 1")
         
         #Pour utiliser les couleurs de rainbow : Créer un box plot avec uns seule des deux cat, et superposer à ce boxplot le second en mettant entre les deux un par(new=TRUE)
         N<-c(N0,N1,N2)#total
         nc<-c(n0,n1,n2)#classés
+        ncl<-nc
+        ncl[ncl==0]<-" "
         nnc<-c(N0-n0,N1-n1,N2-n2)#non classés
+        nncl<-nnc
+        nncl[nncl==0]<-" "
         bp<-barplot(N, xlab="Catégorie",ylab="Nombre de pigeons",main="Nombre de pigeons par catégorie",col=rainbow(length(unique(cv$data$age))),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
         text(x = bp, y = N, label = N, pos = 3, cex = 1, col = "red")## Add text at top of bars
-        text(x = bp, y = nnc+nc/2, label = nc, cex = 1, col = "black")
+        text(x = bp, y = nnc+nc/2, label = ncl, cex = 1, col = "black")
         par(new=TRUE)     
         bp<-barplot(nnc, xlab="Catégorie",ylab="Nombre de pigeons",main="Nombre de pigeons par catégorie",col=c('gray'),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
-        text(x = bp, y = nnc/2, label = nnc, cex = 1, col = "black")
+        text(x = bp, y = nnc/2, label = nncl, cex = 1, col = "black")
         incProgress(1/6, detail = "Plotting barplot 2")
         
         agemax<-max(cv$data$age, na.rm=TRUE)
@@ -362,7 +412,10 @@ output$plotDistance <- renderPlot({
 
   #catmax<-max(cv$data$cat, na.rm=TRUE)
   par(bty="n")#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html mais je commente oma = c(1, 1, 4, 1),mar=c(1,1,1,1), sinon on ne vois plus les labels
-  
+  if(v$editions=="empty"){
+    plot(0,0,type='l',ylab="Vitesse (m/min)",xlab="Distance (km)",main="Distribution des vitesses en fonction de la distance parcourrue",pch=20,col='gray50',xlim=c(0,1000),ylim=c(800,1200))
+    text(500,1000,"Sélectionnez un concours ET une de ses éditions dans les listes déroulantes à gauche", col='red',cex=1.5)
+  }
   if(v$races!="empty" & v$editions!="empty"){
     withProgress(message = tr('ImportData'), value = 0, {
     if(v$speedscale=='man'){
@@ -534,6 +587,9 @@ output$plotRankings <- renderPlot({
     } else {
       text(0,0.9,tr('RankingMethodCCSN'))
       ylab<-tr('RankingMethodCCSNLabel')
+    }
+    if(v$editions=='empty'){
+      text(0,0.5,"Sélectionnez un concours ET une de ses éditions dans les listes déroulantes à gauche", col='red',cex=1.5)
     }
     
     if(v$distfactors=='cat'){
