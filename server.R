@@ -538,7 +538,6 @@ output$plotDistance <- renderPlot({
         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de la date de constatation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
         legend('top',legend = c('Non','Oui'),col=col,pch=20,title = 'Constatation durant une neutralisation',xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
-        
       }
       
       if(v$distfactors=='gainorloose'){
@@ -557,6 +556,17 @@ output$plotDistance <- renderPlot({
         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
         plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Distribution des vitesses en fonction de l'impact des gains et pertes en dessous de 800m/min")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
         legend('right',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement',xpd=TRUE)#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE 
+      }
+    
+      if(v$distfactors=='sex'){
+        col<-c('gray90','red')
+        for(i in c(0,1)){
+          sub.data<-subset(cv$data,fem == as.factor(i))#inneutral = 0 ou 1 selon que l'heure de constatation est dans la neutralisation ou pas
+          points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=col[i+1])
+        }
+        par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction du sexe")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+        legend('top',legend = c('Indéterminé','Femelle'),col=col,pch=20,title = 'Sexe',xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
       }
     incProgress(1/2, detail = "Plotting factor")
     })
@@ -629,6 +639,10 @@ output$plotRankings <- renderPlot({
     }
     if(v$distfactors=='gainorloose'){
       legend('bottomright',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement')#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
+    }
+    if(v$distfactors=='sex'){
+      col<-c('gray90','red')
+      legend('bottomright',legend = c('Indéterminé','Femelle'),col=col,pch=20,title = 'Sexe')#,inset=c(-0.01,0) 
     }
     incProgress(1/4, detail = "Plotting plot 1")
     
@@ -734,6 +748,22 @@ output$plotRankings <- renderPlot({
               sub.sub.data<-subset(sub.data,catposcatrankWNDiff == 0)
               if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
               points(x,sub.sub.data$catrankWN,pch=20,col='yellow')
+            }
+          }
+          
+          if(v$distfactors=='sex'){
+            if(v$speedneutral=="y"){
+              for(j in c(0,1)){
+                sub.sub.data<-subset(sub.data,fem == as.factor(j))
+                if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+                points(x,sub.sub.data$catrank,pch=20,col=col[j+1])
+              }
+            } else {
+              for(j in c(0,1)){
+                sub.sub.data<-subset(sub.data,fem == as.factor(j))
+                if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+                points(x,sub.sub.data$catrankWN,pch=20,col=col[j+1])
+              }
             }
           }
           lines(c(min(sub.data$catrank),max(sub.data$catrank)),c(min(sub.data$catrankWN),max(sub.data$catrankWN)),lty=3,col='black') # Dois être répété dans chaque nouveau plot précédent le "vide" qui place titre et légende sinon ne s'affiche pas correctement     
