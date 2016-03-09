@@ -207,12 +207,7 @@ shinyServer(function(input, output, session) {
       if(v$editions!="empty"){
         cv$data<-subset(cv$data,racedate %in% c(v$editions))
       }
-      if(v$racecat!="-1"){
-        cv$data<-subset(cv$data,cat %in% c(v$racecat))
-      }
-      if(v$country!="all"){
-        cv$data<-subset(cv$data,country %in% c(v$country))
-      }
+
       if(v$speedneutral=='n'){
         cv$data$speedtoplot<-cv$data$speedWN
         cv$dataS$speedtoplot<-cv$dataS$speedWN
@@ -241,6 +236,14 @@ shinyServer(function(input, output, session) {
       cv$data$racedate <- factor(cv$data$racedate)#http://stackoverflow.com/questions/1195826/drop-factor-levels-in-a-subsetted-data-frame
       cv$dataS$racedate <- factor(cv$dataS$racedate)#http://stackoverflow.com/questions/1195826/drop-factor-levels-in-a-subsetted-data-frame
       cv$data$distkm<-cv$data$dist/1000
+      
+      if(v$racecat!="-1"){
+        cv$data<-subset(cv$data,cat %in% c(v$racecat))
+      }
+      if(v$country!="all"){
+        cv$data<-subset(cv$data,country %in% c(v$country))
+      }
+      
       cv$datatoshow<-subset(cv$data,select=c(ring,age,owner,location,cat,catpos,ownerpos,dist,time,inneutral,speed,speedWN,rank,rankWN,catrankDiff))#,racename,racedate,,catposcatrankWNDiff
       names(cv$datatoshow)[1]<-paste("Ring")
       names(cv$datatoshow)[2]<-paste("Age")
