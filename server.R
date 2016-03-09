@@ -528,7 +528,17 @@ output$plotDistance <- renderPlot({
         color.legend.labels<-paste(color.legend.labels,"h",sep='')
         color.legend(1,1,1.03,0,color.legend.labels,col,gradient="y")
       }
-    
+      if(v$distfactors=='country'){
+        countries<-c('B','N','F','D','L','E')
+        col<-c('red','orange','blue','black','pink','purple')
+        for(i in 1:length(countries)){
+          sub.data<-subset(cv$data,country == countries[i])
+          points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=col[i])
+        }
+        par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction du pays")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+        legend('top',legend = countries,col=col,pch=20,title = 'Pays',xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
+      }
       if(v$distfactors=='neutral'){
         col<-c('gray90','red')
         for(i in c(0,1)){
@@ -640,6 +650,11 @@ output$plotRankings <- renderPlot({
     if(v$distfactors=='gainorloose'){
       legend('bottomright',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement')#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
     }
+    if(v$distfactors=='country'){
+      countries<-c('B','N','F','D','L','E')
+      col<-c('red','orange','blue','black','pink','purple')
+      legend('bottomright',legend = countries,col=col,pch=20,title = 'Pays')#,inset=c(-0.01,0)
+    }
     if(v$distfactors=='sex'){
       col<-c('gray90','red')
       legend('bottomright',legend = c('Indéterminé','Femelle'),col=col,pch=20,title = 'Sexe')#,inset=c(-0.01,0) 
@@ -750,6 +765,26 @@ output$plotRankings <- renderPlot({
               points(x,sub.sub.data$catrankWN,pch=20,col='yellow')
             }
           }
+          
+          
+          if(v$distfactors=='country'){
+            countries<-c('B','N','F','D','L','E')
+            col<-c('red','orange','blue','black','pink','purple')
+            if(v$speedneutral=="y"){
+              for(i in 1:length(countries)){
+                sub.sub.data<-subset(sub.data,country == countries[i])
+                if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+                points(x,sub.sub.data$catrank,pch=20,col=col[i])
+              }
+            } else {
+              for(i in 1:length(countries)){
+                sub.sub.data<-subset(sub.data,country == countries[i])
+                if(v$rankingmethods=='co'){x<-sub.sub.data$catpos}else{x<-sub.sub.data$catrank}
+                points(x,sub.sub.data$catrankWN,pch=20,col=col[i])
+              }
+            }
+          }
+          
           
           if(v$distfactors=='sex'){
             if(v$speedneutral=="y"){
