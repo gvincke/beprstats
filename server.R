@@ -104,6 +104,15 @@ shinyServer(function(input, output, session) {
     return(l)
   })
   
+  countries <- read.delim("data/lang-countries.csv", header = TRUE, sep = "\t", as.is = TRUE) 
+  row.names(countries)<-countries$key #to have key in both row.names and $key. If we whant only as row.names add row.names=1 to read.delim
+  getCountrySelection<-reactive({
+    l<-list()
+    for(i in 1:nrow(countries)){
+      l[[countries[[input$language]][i]]]<-countries$key[i]
+    }
+    return(l)
+  })
   roundUpNice <- function(x, nice=c(1,2,4,5,6,8,10)) {#http://stackoverflow.com/questions/6461209/how-to-round-up-to-the-nearest-10-or-100-or-x
     if(length(x) != 1) stop("'x' must be of length 1")
     10^floor(log10(x)) * nice[[which(x <= 10^floor(log10(x)) * nice)[[1]]]]
@@ -200,6 +209,9 @@ shinyServer(function(input, output, session) {
       }
       if(v$racecat!="-1"){
         cv$data<-subset(cv$data,cat %in% c(v$racecat))
+      }
+      if(v$country!="all"){
+        cv$data<-subset(cv$data,country %in% c(v$country))
       }
       if(v$speedneutral=='n'){
         cv$data$speedtoplot<-cv$data$speedWN
@@ -870,6 +882,7 @@ output$uiSBPigeonsSpeed <- renderUI({
   fluidRow(column(12,
       h5(HTML(paste("Sélection des pigeons",":",sep=" "))),
       selectInput("racecat", label=HTML(paste(tr("Category")," :",sep="")), choices=getCategorySelection(),selected="auto",selectize=FALSE),
+      selectInput("country", label=HTML(paste(tr("Countries")," :",sep="")), choices=getCountrySelection(),selected="auto",selectize=FALSE),      
       h5(HTML(paste(tr("PigeonsSpeed"),":",sep=" "))),
       selectInput("speedscale", label=HTML(paste(tr("Scale")," :",sep="")), choices=getSpeedScaleSelection(),selected="auto",selectize=FALSE),
       conditionalPanel(

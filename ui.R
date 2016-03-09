@@ -25,7 +25,7 @@ shinyUI(navbarPage("Belgium Pigeon Racing Statistics",id="main",#http://shiny.rs
     tags$head(includeScript("www/js/google-analytics.js")),
     tags$script(type="text/javascript",src="js/scripts.js"),
     tags$link(rel = "stylesheet", type = "text/css", href = "css/progress.css"),
-    tags$style(type='text/css', "select#races,select#editions, select#speedscale, select#racecat { width: 150px; display : inline; }"),
+    tags$style(type='text/css', "select#races,select#editions, select#speedscale, select#racecat,select#country { width: 150px; display : inline; }"),
     tags$style(type='text/css', "select#distfactors { width: 125px; display : inline; }"),
     tags$style(type='text/css', "select#speedneutral ,select#speedloosegain { width: 75px; display : inline; }"),
     tags$style(type="text/css", "h1,h2,h3,h4,h5,h6 {color:#317EAC;}"),
