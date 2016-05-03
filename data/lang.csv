@@ -20,6 +20,8 @@ SourcesiUsed	Pour réaliser cette animation, j'ai récolté des données, et des
 OtherApps	Autres applications	Other apps	Andere apps
 Animation	Animation	Animation	Animatie
 
+Yes	Oui	Yes	Ja
+No	Non	No	Nee
 December	Décembre	December	December
 May	Mai	May	Mei
 PigeonsSpeed	Vitesse des pigeons en m/min	Speed of pigeons in m/min	Snelheid van duiven in m/min
@@ -72,6 +74,12 @@ SpeedDistributionByEdition	Distribution des vitesses par édition	Speed distribu
 SpeedDistributionByCategory	Distribution des vitesses par catégorie	Speed distribution per category	Snelheid verdeling per categorie
 SpeedDistributionByAge	Distribution des vitesses par classe d'âge	Speed distribution by age	Snelheid verdeling naar leeftijd
 SpeedDistributionByDistance	Distribution des vitesses en fonction de la distance parcourrue	Speed distribution by distance	Snelheid verdeling op afstand	
+SpeedDistributionByDate	Distribution des vitesses en fonction de la date de constatation	Speed distribution by clocking date	Snelheid verdeling per klokken datum	
+SpeedDistributionByWinLoose Distribution des vitesses en fonction de l'impact des gains et pertes en dessous de 800 m/min	Speed distribution depending on the impact of gains and losses below 800 m/min	Snelheid verdeling afhankelijk van de impact van winsten en verliezen onder de 800 m/min
+SpeedDistributionByCountry	Distribution des vitesses en fonction du pays	Speed distribution by country	Snelheid verdeling per land
+SpeedDistributionbyFlightDuration	Distribution des vitesses en fonction de durée du vol, en heures	Speed distribution according to flight duration, in hours	Snelheid verdeling volgens de duur van de vlucht, in uren
+SpeedDistributionbySex	Distribution des vitesses en fonction du sexe	Speed distribution according to sex	Snelheid verdeling naar geslacht
+ClockingDuringNeutral	Constatation durant une neutralisation	Clocking during neutralization	Kloksnelheid tijdens de neutralisatie
 NumberOfPigeons	Nombre de pigeons	Number of pigeons	Aantal duiven
 NumberOfPigeonsByCategory	Nombre de pigeons par catégorie	Number of pigeons per category	Aantal duiven per categorie
 NumberOfPigeonsByAge	Nombre de pigeons par classe d'âge	Number of pigeons by age	Aantal duiven naar leeftijd
@@ -86,3 +94,10 @@ SelectionOfPigeons	Sélection des pigeons	Selection of pigeons	Selectie of de du
 DisplayNautralZones	Afficher les zones de neutralisation	Display zones neutralization	Weergave zones neutralisatie
 Thanks	Remerciements	Thanks	Bedankt
 ThanksDetails	Pour réaliser cette animation, j'ai bénéficié des conseils et explications de plusieurs experts. Qu'ils en soient infiniment remerciés.	To achieve this animation, I received advice and explanations of several experts. A big thank you to them.	Om deze animatie te bereiken, kreeg ik advies en uitleg van verschillende experts. Een grote dank aan hen.
+Positive	Positif	Positive	Positief
+Negative	Négative	Negative	Negatief
+Unchanged	Inchangé	Unchanged	Onveranderd
+ImpactOnRanking	Impact sur le classement	Impact on ranking	Impact op de ranglijst
+Unknown	Inconnu	Unknown	Onbekend
+Sex	Sexe	Sex	Geslacht
+Hen	Femelle	Hen	Hen

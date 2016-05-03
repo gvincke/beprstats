@@ -26,7 +26,7 @@ SRV <- reactiveValues(count=0)#Session reactive values
 cc <- readPNG("www/img/cc_by_320x60.png")
 
 # TODO
-# Ajouter legendes et titres et explications dans neutralisation et poteau
+# explications dans neutralisation et poteau
 # Réfléchir a montrer les changement de classement (combien de pigeons changent de position sans neutralisations)
 # Créer classement général : avec ou sans poteau !!!!! (classement vitesse puis par date+heure de constatation !!)
 # Compter combien de victoires générale par age et catégorie et le mettre dans le summary
@@ -36,9 +36,7 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 # Faire un scrpit de vérification des données de distance ne fut-ce que entre fichier int et doublage femelles, et entre différentes éditions du même concours
 # Expliquer en quoi c'est difficile de post-traiter : faudrais : coordonnées lieux du lâcher, coordonnées des amateurs, datetime de la constatation et pas que time, heures de neutralisation, et TOUS les résultats, pas que ceux classés, sexe de tous les pigeons, age de tous les pigeons, pays de tous les pigeons
 # Pour chaque facteur de variation dans le plot distance associer un plot de comptage des nombres par critères avec une répatition 3/4 1/4 conditionnelles (Afficher les nombres par catégorie) : ou ajouter les nombres dans les légendes !!! en face de chaque niveau de chaque facteur ?
-# Femelles : sexe = 0 pour sexe inconnu, et >0 = rank dans le doublage femelle ? (oui mais s'il y a plusieurs doublages ?)
 # Titres des graphiques en varaible puis paste pour le complément (plotDistance par exemple)
-# résultats nationaux Belgique :  toutes les femelles sont doublées car c'est gratuit : compéraison des sexes est alors possible !
 # Attention : sélection des éditions doit être à deux clés : en vitesse on aura peut-être des concours ayant été lâchés le même jour du même endroit mais pas pour le même groupement ... : lieux + date + organisateur = clé primaire :oui mais alors soit on rajoute org à tous les fichiers, soit on ajoute un id unique pour chaque concours, qu'on ajoute dans tous les résultats, histoire que s'il y ai encore un clé à rajouter cela n'encombre pas trop les résultats. Cet id est-il à chaque fois recalculé, ou attribué définitivement (mieux car ne demande pas qu'on compile tout pour que les id soient corrects) : voir ce qu'on peut du coup supprimer des tableaux de données pour augmenter leur chargement
 
 #Done :
@@ -52,6 +50,9 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 # Gain et Pertes : faire for i dans les catégories existantes et afficher autant de plot que de catégorie
 # Supprimer le plotNeutral, et le fisionner avec le plot Poteau pour en faire un plot Classements ou on peut sélectionner ce qu'on met en x (catpos ou rank) et ce qu'on met en y (rank ou rankWN)
 # Barcelone 2010 et 2009 : vérifier que les deux premiers ne sont pas avec ds vitesses calculées trop grandes du a un jours de ocntatation erronée, car sortent du poteau !! En fait vérifier chaque cocours que le classement soit bien respecté, car dans les barcelone il y a toujours 3 - 4 pigeons issus du poteau qui ont des vitesses énormes dues à un jour de constatation erroné !
+# résultats nationaux Belgique :  toutes les femelles sont doublées car c'est gratuit : compéraison des sexes est alors possible !
+# Femelles : sexe = 0 pour sexe inconnu, et >0 = rank dans le doublage femelle ? (oui mais s'il y a plusieurs doublages ?)
+# Ajouter legendes et titres en multilangue
 
 shinyServer(function(input, output, session) {
   # https://gist.github.com/trestletech/9926129
@@ -514,7 +515,7 @@ output$plotDistance <- renderPlot({
       }
       
       par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de la date de constatation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main=tr('SpeedDistributionByDate'))#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
       legend('top',legend = j+1,col=col,pch=20,title = tr('ClockingDay'),xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
       
     }
@@ -539,7 +540,7 @@ output$plotDistance <- renderPlot({
         }
 
         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de durée du vol, en heures")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main=tr('SpeedDistributionbyFlightDuration'))#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
         color.legend.labels<-seq(1,dmax,by=4)
         color.legend.labels<-paste(color.legend.labels,"h",sep='')
         color.legend(1,1,1.03,0,color.legend.labels,col,gradient="y")
@@ -552,8 +553,8 @@ output$plotDistance <- renderPlot({
           points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=col[i])
         }
         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction du pays")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        legend('top',legend = countries,col=col,pch=20,title = 'Pays',xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
+        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main=tr('SpeedDistributionByCountry'))#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+        legend('top',legend = countries,col=col,pch=20,title = tr('Countries'),xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
       }
       if(v$distfactors=='neutral'){
         col<-c('gray90','red')
@@ -562,8 +563,8 @@ output$plotDistance <- renderPlot({
           points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=col[i+1])
         }
         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de la date de constatation")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        legend('top',legend = c('Non','Oui'),col=col,pch=20,title = 'Constatation durant une neutralisation',xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
+        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main=tr('SpeedDistributionByDate'))#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+        legend('top',legend = c(tr('No'),tr('Yes')),col=col,pch=20,title = tr('ClockingDuringNeutral'),xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
       }
       
       if(v$distfactors=='gainorloose'){
@@ -580,8 +581,8 @@ output$plotDistance <- renderPlot({
           points(sub.data$distkm,sub.data$speedtoplot,pch=20,col='yellow')
         }
         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main="Distribution des vitesses en fonction de l'impact des gains et pertes en dessous de 800m/min")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        legend('right',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement',xpd=TRUE)#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE 
+        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", xlab='',ylab='',main=tr('SpeedDistributionByWinLoose'))#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+        legend('right',legend = c(tr('Positive'),tr('Unchanged'),tr('Negative')),col=c('Green','yellow','red'),pch=20,title = tr('ImpactOnRanking'),xpd=TRUE)#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE 
       }
     
       if(v$distfactors=='sex'){
@@ -591,8 +592,8 @@ output$plotDistance <- renderPlot({
           points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=col[i+1])
         }
         par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction du sexe")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-        legend('top',legend = c('Indéterminé','Femelle'),col=col,pch=20,title = 'Sexe',xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
+        plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main=tr('SpeedDistributionbySex'))#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+        legend('top',legend = c(tr('Unknown'),tr('Hen')),col=col,pch=20,title = tr('Sex'),xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
       }
     incProgress(1/2, detail = "Plotting factor")
     })
@@ -657,23 +658,23 @@ output$plotRankings <- renderPlot({
       color.legend.labels<-seq(1,dmax,by=4)
       color.legend.labels<-paste(color.legend.labels,"h",sep='')
       color.legend(0.97,0.75,1,-1,color.legend.labels,col,gradient="y")
-      text(0.8,-0.015,"Durée du vol (en heures)",srt=90)#,srt=90,pos=2
+      text(0.8,-0.015,tr('FlightDurationH'),srt=90)#,srt=90,pos=2
     }
     if(v$distfactors=='neutral'){
       col<-c('gray90','red')
-      legend('bottomright',legend = c('Non','Oui'),col=col,pch=20,title = 'Constatation durant une neutralisation')#,inset=c(-0.01,0) 
+      legend('bottomright',legend = c(tr('No'),tr('Yes')),col=col,pch=20,title = tr('ClockingDuringNeutral'))#,inset=c(-0.01,0) 
     }
     if(v$distfactors=='gainorloose'){
-      legend('bottomright',legend = c('Positif','Inchangé','Négatif'),col=c('Green','yellow','red'),pch=20,title = 'Impact sur le classement')#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
+      legend('bottomright',legend = c(tr('Positive'),tr('Unchanged'),tr('Negative')),col=c('Green','yellow','red'),pch=20,title = tr('ImpactOnRanking'))#,inset=c(-0.01,0),xpd=TRUE,horiz=TRUE
     }
     if(v$distfactors=='country'){
       countries<-c('B','N','F','D','L','E')
       col<-c('red','orange','blue','black','pink','purple')
-      legend('bottomright',legend = countries,col=col,pch=20,title = 'Pays')#,inset=c(-0.01,0)
+      legend('bottomright',legend = countries,col=col,pch=20,title = tr('Countries'))#,inset=c(-0.01,0)
     }
     if(v$distfactors=='sex'){
       col<-c('gray90','red')
-      legend('bottomright',legend = c('Indéterminé','Femelle'),col=col,pch=20,title = 'Sexe')#,inset=c(-0.01,0) 
+      legend('bottomright',legend = c(tr('Unknown'),tr('Hen')),col=col,pch=20,title = tr('Sex'))#,inset=c(-0.01,0) 
     }
     incProgress(1/4, detail = "Plotting plot 1")
     
