@@ -995,8 +995,22 @@ output$uiCredits2 <- renderUI({
     HTML("<ul>"),
     HTML("<li><a href='http://www.pipa.be' traget='_blank'>http://www.pipa.be</a> : Pigeon Paradise</li>"),
     HTML("<li><a href='http://lacolombophilieho.be/' traget='_blank'>http://lacolombophilieho.be/</a> : La colombophile en Hainaut Occidental</li>"),
+    HTML("<li><a href='http://pitts.be/' traget='_blank'>http://pitts.be/</a> : Pigeons into the Sky</li>"),
+    HTML("<li><a href='http://users.skynet.be/cfw/' traget='_blank'>http://users.skynet.be/cfw/</a> : Club de Fond Wallonie</li>"),
+    HTML("<li><a href='http://www.cureghem-centre.be/' traget='_blank'>http://www.cureghem-centre.be/</a> : Cureghem Centre</li>"),
     # CFW, Cureghem, 
     #Remerciements : Casaert, Phillipens, CFW, Carlier, Druart, Mirabelle
+    HTML("</ul>"),
+    p(HTML(paste("<strong>",tr("Thanks")," :</strong> ",tr("ThanksDetails")," :",sep=""))),
+    HTML("<ul>"),
+    HTML("<li>Sébastien Casaert : <a href='http://www.casaert-senechal.be' traget='_blank'>http://www.casaert-senechal.be</a></li>"),
+    HTML("<li>Patrick Phillipens : <a href='http://plpigeon.com/en/With_FL/html/index.html' traget='_blank'>http://plpigeon.com</a></li>"),
+    HTML("<li>Guy Libotte : <a href='http://www.unionwallonneramillies.be' traget='_blank'>http://www.unionwallonneramillies.be</a></li>"),
+    HTML("<li>Daniel Stoclet : <a href='http://users.skynet.be/cfw/' traget='_blank'>Club Fond Wallonie</a></li>"),
+    HTML("<li>Fabrice Carlier : <a href='http://lacolombophilieho.be/' traget='_blank'>http://lacolombophilieho.be</a> - <a href='http://www.pigeonsbay.be/' traget='_blank'>http://www.pigeonsbay.be</a></li>"),
+    HTML("<li>Adrien Mirabelle : <a href='http://www.pipa.be/fr/newsandarticles/fancier-index/mirabelle-adrien' traget='_blank'>PIPA</a></li>"),
+    HTML("<li>Kevin Druart : <a href='http://famille-3d.e-monsite.com/' traget='_blank'>Famille 3D</a></li>"),
+    HTML("<li>Gilbert Sacré : <a href='http://www.euronamur.net/Pigeon/' traget='_blank'>http://www.euronamur.net/Pigeon/</a></li>"),
     HTML("</ul>")
   )
 })
