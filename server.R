@@ -39,6 +39,7 @@ cc <- readPNG("www/img/cc_by_320x60.png")
 # Femelles : sexe = 0 pour sexe inconnu, et >0 = rank dans le doublage femelle ? (oui mais s'il y a plusieurs doublages ?)
 # Titres des graphiques en varaible puis paste pour le complément (plotDistance par exemple)
 # résultats nationaux Belgique :  toutes les femelles sont doublées car c'est gratuit : compéraison des sexes est alors possible !
+# Attention : sélection des éditions doit être à deux clés : en vitesse on aura peut-être des concours ayant été lâchés le même jour du même endroit mais pas pour le même groupement ... : lieux + date + organisateur = clé primaire :oui mais alors soit on rajoute org à tous les fichiers, soit on ajoute un id unique pour chaque concours, qu'on ajoute dans tous les résultats, histoire que s'il y ai encore un clé à rajouter cela n'encombre pas trop les résultats. Cet id est-il à chaque fois recalculé, ou attribué définitivement (mieux car ne demande pas qu'on compile tout pour que les id soient corrects) : voir ce qu'on peut du coup supprimer des tableaux de données pour augmenter leur chargement
 
 #Done :
 # Hypothese Philippens : poteau = pour réduire impact de la distance en dessous de 800m/min donc identifier dans le plot de distance l'effet du poteau, avec en rouge ceux qui perdent des places et en vert ceux qui en gagnent. Normalement sous le poteau je devrais trouver du vert, et au delà du rouge ... Confirmé par Sébastien casaerts et par le CFW : 800m/min est la vitesse minimale de vol du pigeon. Donc en dessous de cette vitesse il s'est OBLIGATOIREMENT arrété, et le but du poteau est de limiter cet impact d'un arrêt, qui est d'autant plus grand que la distance est longue
@@ -271,9 +272,9 @@ shinyServer(function(input, output, session) {
       m<-matrix(c(1,2),2,1,byrow=TRUE)#matrix(c(1,1,2),3,1,byrow=TRUE)
       layout(m,width=c(1,1))
       par(bty="n")
-      plot(0,0,type='l',ylab="Vitesse (m/min)",xlab="Dates",main="Distribution des vitesses par édition",ylim=c(800,1200),xaxt="n")
-      text(0,1000,"Sélectionnez un concours dans la liste déroulante à gauche", col='red',cex=1.5)
-      plot(0,0,type='l',ylab="Nombre de pigeons",xlab="Dates",main="Nombre total de pigeons",ylim=c(0,1000),xaxt="n")
+      plot(0,0,type='l',ylab=tr('SpeedWithUnit'),xlab=tr('Dates'),main=tr('SpeedDistributionByEdition'),ylim=c(800,1200),xaxt="n")
+      text(0,1000,tr('SelectRaceListLeft'), col='red',cex=1.5)
+      plot(0,0,type='l',ylab=tr('NumberOfPigeons'),xlab=tr('Dates'),main=tr('TotalNumberOfPigeons'),ylim=c(0,1000),xaxt="n")
     }
     
     if(v$races!="empty"){
@@ -284,9 +285,9 @@ shinyServer(function(input, output, session) {
         #Podium du nombre de victoires totales par catégories, et par age
         par(bty="n")
         if(v$speedscale=='man'){
-          boxplot(speedtoplot~racedate,data=cv$dataS, col='green',range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="Dates",main="Distribution des vitesses par édition",xaxt="n")# col=rainbow(length(unique(cv$dataS$racedate))),ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+          boxplot(speedtoplot~racedate,data=cv$dataS, col='green',range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab=tr('SpeedWithUnit'),xlab=tr('Dates'),main=tr('SpeedDistributionByEdition'),xaxt="n")# col=rainbow(length(unique(cv$dataS$racedate))),ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
         } else {
-          boxplot(speedtoplot~racedate,data=cv$dataS, col='green',range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Dates",main="Distribution des vitesses par édition",xaxt="n")# col=rainbow(length(unique(cv$dataS$racedate))),ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+          boxplot(speedtoplot~racedate,data=cv$dataS, col='green',range=1.5,varwidth=TRUE,ylab=tr('SpeedWithUnit'),xlab=tr('Dates'),main=tr('SpeedDistributionByEdition'),xaxt="n")# col=rainbow(length(unique(cv$dataS$racedate))),ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
         }
         incProgress(1/2, detail = "Plotting boxplot")
         axis(1, at=1:length(unique(cv$dataS$racedate)), labels=unique(cv$dataS$racedate))#las = 2,, cex.axis = 0.8
@@ -307,12 +308,12 @@ shinyServer(function(input, output, session) {
           n[[d]]<-c((N0+N1+N2)-(n0+n1+n2),n0+n1+n2)
         }
         m<-as.matrix(structure(n, class = "data.frame", .Names=dates, row.names=c(NA,-2L)))
-        bp<-barplot(m, xlab="Dates",ylab="Nombre de pigeons",main="Nombre total de pigeons",col=c('gray','green'),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))),names=dates)#col=rainbow(length(unique(dates)))
+        bp<-barplot(m, xlab=tr('Dates'),ylab=tr('NumberOfPigeons'),main=tr('TotalNumberOfPigeons'),col=c('gray','green'),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))),names=dates)#col=rainbow(length(unique(dates)))
         #points(x = bp, y = (m[1,]+m[2,])+(m[2,]*0.5),col='red')
         text(x = bp, y = m[1,]+m[2,], label = m[1,]+m[2,], pos = 3, cex = 0.8, col = "red")## Add text at top of bars
         text(x = bp, y = m[1,]+(m[2,]/2), label = m[2,], cex = 0.8, col = "black")## Add text at top of bars
         text(x = bp, y = m[1,]/2, label = m[1,], cex = 0.8, col = "black")## Add text at top of bars
-        legend('topright',legend = c('Classés','Non classés'),col=c('green','gray'),pch=15)#,horiz=TRUE
+        legend('topright',legend = c(tr('Classified'),tr('NotClassified')),col=c('green','gray'),pch=15)#,horiz=TRUE
         incProgress(1/2, detail = "Plotting barplot")
       })
     }
@@ -328,20 +329,20 @@ shinyServer(function(input, output, session) {
       
       m <- matrix( c(0,1),nrow=1,ncol=2)
       dimnames(m) = list(c(),c("f1", "f2"))
-      boxplot(f1~f2,m,col="white",xaxt="n",xlab="",ylab="Vitesse (m/min)",ylim=c(800,1600),main="Distribution des vitesses")
+      boxplot(f1~f2,m,col="white",xaxt="n",xlab="",ylab=tr('SpeedWithUnit'),ylim=c(800,1600),main=tr('SpeedDistribution'))
       
       m <- matrix( c(0,0,0,1,2,3),nrow=3,ncol=2)
       dimnames(m) = list(c("1","2","3"),c("f1", "f2"))
-      boxplot(f1~f2,m,col="white",ylab="Vitesse (m/min)",xlab="Catégorie",ylim=c(800,1600),main="Distribution des vitesses par catégorie",names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
+      boxplot(f1~f2,m,col="white",ylab=tr('SpeedWithUnit'),xlab=tr('Category'),ylim=c(800,1600),main=tr('SpeedDistributionByCategory'),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
       
       m <- matrix( c(0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,8),nrow=8,ncol=2)
       dimnames(m) = list(c(),c("f1", "f2"))
-      boxplot(f1~f2,m,col="white",ylab="Vitesse (m/min)",xlab="Age (années)",ylim=c(800,1600),main="Distribution des vitesses par classe d'age")
-      text(4.5,1200,"Sélectionnez un concours ET une de ses éditions dans les listes déroulantes à gauche",col='red',cex=2)
+      boxplot(f1~f2,m,col="white",ylab=tr('SpeedWithUnit'),xlab=tr('AgeYears'),ylim=c(800,1600),main=tr('SpeedDistributionByAge'))
+      text(4.5,1200,tr('SelectRaceEditionListLeft'),col='red',cex=2)
       
-      barplot(c(0),xaxt="n",xlab="",ylab="Nombre de pigeons",main="Nombre total de pigeons",ylim=c(0,1000))
-      barplot(c(0,0,0),xlab="Catégorie",ylab="Nombre de pigeons",main="Nombre de pigeons par catégorie",ylim=c(0,1000),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
-      barplot(c(0,0,0,0,0,0,0,0),xlab="Age (années)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe d'age",names=c(1:8),ylim=c(0,1000))
+      barplot(c(0),xaxt="n",xlab="",ylab=tr('NumberOfPigeons'),main=tr('TotalNumberOfPigeons'),ylim=c(0,1000))
+      barplot(c(0,0,0),xlab=tr('Category'),ylab=tr('NumberOfPigeons'),main=tr('NumberOfPigeonsByCategory'),ylim=c(0,1000),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
+      barplot(c(0,0,0,0,0,0,0,0),xlab=tr('AgeYears'),ylab=tr('NumberOfPigeons'),main=tr('NumberOfPigeonsByAge'),names=c(1:8),ylim=c(0,1000))
       
     }
 
@@ -354,9 +355,9 @@ shinyServer(function(input, output, session) {
         par(bty="n")
         
         if(v$speedscale=='man'){
-          boxplot(speedtoplot~racedate,data=cv$data, col='green',range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="",main="Distribution des vitesses")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+          boxplot(speedtoplot~racedate,data=cv$data, col='green',range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab=tr('SpeedWithUnit'),xlab="",main=tr('SpeedDistribution'))# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
         } else {
-          boxplot(speedtoplot~racedate,data=cv$data, col='green',range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="",main="Distribution des vitesses")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+          boxplot(speedtoplot~racedate,data=cv$data, col='green',range=1.5,varwidth=TRUE,ylab=tr('SpeedWithUnit'),xlab="",main=tr('SpeedDistribution'))# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
         }
         incProgress(1/6, detail = "Plotting boxplot 1")
         
@@ -365,17 +366,17 @@ shinyServer(function(input, output, session) {
         
         cv$data$cattoplot <- factor(cv$data$cat,levels = 0:catmax)#create categories and force adding of empty groups
         if(v$speedscale=='man'){
-          boxplot(speedtoplot~cattoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="Catégorie",main="Distribution des vitesses par catégorie",names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+          boxplot(speedtoplot~cattoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab=tr('SpeedWithUnit'),xlab=tr('Category'),main=tr('SpeedDistributionByCategory'),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
         } else {
-          boxplot(speedtoplot~cattoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Catégorie",main="Distribution des vitesses par catégorie",names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+          boxplot(speedtoplot~cattoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylab=tr('SpeedWithUnit'),xlab=tr('Category'),main=tr('SpeedDistributionByCategory'),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
         }
         incProgress(1/6, detail = "Plotting boxplot 2")
         
         cv$data$agetoplot <- factor(cv$data$age,levels = 0:agemax)#create categories and force adding of empty groups
         if(v$speedscale=='man'){
-          boxplot(speedtoplot~agetoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="Age (années)",main="Distribution des vitesses par classe d'age")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+          boxplot(speedtoplot~agetoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylim=c(v$speed[1],v$speed[2]),ylab=tr('SpeedWithUnit'),xlab=tr('AgeYears'),main=tr('SpeedDistributionByAge'))# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
         } else {
-          boxplot(speedtoplot~agetoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylab="Vitesse (m/min)",xlab="Age (années)",main="Distribution des vitesses par classe d'age")# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
+          boxplot(speedtoplot~agetoplot,data=cv$data, col=rainbow(length(unique(cv$data$age))),range=1.5,varwidth=TRUE,ylab=tr('SpeedWithUnit'),xlab=tr('AgeYears'),main=tr('SpeedDistributionByAge'))# ,ylim=c(800,1800) , range=1.5 by default : gestion des valeurs extrèmes. varwidth=Largeur proportionnelle à la racine carrée du nombre d’observation par groupe
         }
         incProgress(1/6, detail = "Plotting boxplot 3")
         
@@ -390,7 +391,7 @@ shinyServer(function(input, output, session) {
         
         n<-c((N0+N1+N2)-(n0+n1+n2),n0+n1+n2)
         m<-as.matrix(structure(list(n), class = "data.frame", .Names=v$editions, row.names=c(NA,-2L)))
-        bp<-barplot(m, xlab=" ",xaxt="n",ylab="Nombre de pigeons",main="Nombre total de pigeons",col=c('gray','green'),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))))
+        bp<-barplot(m, xlab=" ",xaxt="n",ylab=tr('NumberOfPigeons'),main=tr('TotalNumberOfPigeons'),col=c('gray','green'),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))))
         text(x = bp, y = m[1,]+m[2,], label = m[1,]+m[2,], pos = 3, cex = 1, col = "red")## Add text at top of bars
         if(m[2,]>0){text(x = bp, y = m[1,]+(m[2,]/2), label = m[2,], cex = 1, col = "black")}## Add text at top of bars
         if(m[1,]>0){text(x = bp, y = m[1,]/2, label = m[1,], cex = 1, col = "black")}## Add text at top of bars
@@ -404,17 +405,17 @@ shinyServer(function(input, output, session) {
         nnc<-c(N0-n0,N1-n1,N2-n2)#non classés
         nncl<-nnc
         nncl[nncl==0]<-" "
-        bp<-barplot(N, xlab="Catégorie",ylab="Nombre de pigeons",main="Nombre de pigeons par catégorie",col=rainbow(length(unique(cv$data$age))),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
+        bp<-barplot(N, xlab=tr('Category'),ylab=tr('NumberOfPigeons'),main=tr('NumberOfPigeonsByCategory'),col=rainbow(length(unique(cv$data$age))),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
         text(x = bp, y = N, label = N, pos = 3, cex = 1, col = "red")## Add text at top of bars
         text(x = bp, y = nnc+nc/2, label = ncl, cex = 1, col = "black")
         par(new=TRUE)     
-        bp<-barplot(nnc, xlab="Catégorie",ylab="Nombre de pigeons",main="Nombre de pigeons par catégorie",col=c('gray'),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
+        bp<-barplot(nnc, xlab=tr('Category'),ylab=tr('NumberOfPigeons'),main=tr('NumberOfPigeonsByCategory'),col=c('gray'),ylim=c(0,roundUpNice(max((m[1,]+m[2,])*1.1))),names=c(tr("Youngsters"), tr("Yearlings"),tr("Olds")))
         text(x = bp, y = nnc/2, label = nncl, cex = 1, col = "black")
         incProgress(1/6, detail = "Plotting barplot 2")
         
         agemax<-max(cv$data$age, na.rm=TRUE)
         n <- table(factor(cv$data$age,levels = 0:agemax))#http://r.789695.n4.nabble.com/creating-empty-cells-with-table-td798211.html
-        bp<-barplot(n, xlab="Age (années)",ylab="Nombre de pigeons",main="Nombre de pigeons par classe d'age",col=rainbow(length(unique(cv$data$age))),ylim=c(0,roundUpNice(nrow(cv$data))))
+        bp<-barplot(n, xlab=tr('AgeYears'),ylab=tr('NumberOfPigeons'),main=tr('NumberOfPigeonsByAge'),col=rainbow(length(unique(cv$data$age))),ylim=c(0,roundUpNice(nrow(cv$data))))
         text(x = bp, y = n, label = n, pos = 3, cex = 1, col = "red")## Add text at top of bars
         incProgress(1/6, detail = "Plotting barplot 3")
       })
@@ -428,15 +429,15 @@ output$plotDistance <- renderPlot({
   #catmax<-max(cv$data$cat, na.rm=TRUE)
   par(bty="n")#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html mais je commente oma = c(1, 1, 4, 1),mar=c(1,1,1,1), sinon on ne vois plus les labels
   if(v$editions=="empty"){
-    plot(0,0,type='l',ylab="Vitesse (m/min)",xlab="Distance (km)",main="Distribution des vitesses en fonction de la distance parcourrue",pch=20,col='gray50',xlim=c(0,1000),ylim=c(800,1200))
-    text(500,1000,"Sélectionnez un concours ET une de ses éditions dans les listes déroulantes à gauche", col='red',cex=1.5)
+    plot(0,0,type='l',ylab=tr('SpeedWithUnit'),xlab=tr('DistanceKm'),main=tr('SpeedDistributionByDistance'),pch=20,col='gray50',xlim=c(0,1000),ylim=c(800,1200))
+    text(500,1000,tr('SelectRaceEditionListLeft'), col='red',cex=1.5)
   }
   if(v$races!="empty" & v$editions!="empty"){
     withProgress(message = tr('ImportData'), value = 0, {
     if(v$speedscale=='man'){
-      plot(cv$data$distkm,cv$data$speedtoplot,ylim=c(v$speed[1],v$speed[2]),ylab="Vitesse (m/min)",xlab="Distance (km)",main="",pch=20,col='gray50')#,ylim=c(min(cv$data$speed),max(cv$data$speed))
+      plot(cv$data$distkm,cv$data$speedtoplot,ylim=c(v$speed[1],v$speed[2]),ylab=tr('SpeedWithUnit'),xlab=tr('DistanceKm'),main="",pch=20,col='gray50')#,ylim=c(min(cv$data$speed),max(cv$data$speed))
     } else {
-      plot(cv$data$distkm,cv$data$speedtoplot,ylab="Vitesse (m/min)",xlab="Distance (km)",main="",pch=20,col='gray50')#,ylim=c(min(cv$data$speed),max(cv$data$speed))
+      plot(cv$data$distkm,cv$data$speedtoplot,ylab=tr('SpeedWithUnit'),xlab=tr('DistanceKm'),main="",pch=20,col='gray50')#,ylim=c(min(cv$data$speed),max(cv$data$speed))
     }
     incProgress(1/2, detail = "Plotting distance")
     if(v$flh==TRUE){#Tracer les lignes d'heures de vol
@@ -467,7 +468,7 @@ output$plotDistance <- renderPlot({
 
     if(v$distfactors=='unselected'){
       par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de la distance parcourrue")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main=tr('SpeedDistributionByDistance'))#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
     }
     
     if(v$distfactors=='cat'){
@@ -478,7 +479,7 @@ output$plotDistance <- renderPlot({
         points(sub.data$distkm,sub.data$speedtoplot,pch=20,col=col[i])
       }
       par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de la distance parcourrue")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main=tr('SpeedDistributionByDistance'))#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
       legend('top',legend = c(tr("Youngsters"), tr("Yearlings"),tr("Olds")),col=col,pch=20,title = tr('Category'),xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
     }
     
@@ -493,7 +494,7 @@ output$plotDistance <- renderPlot({
       }
       
       par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(1, 1, 2, 1), new = TRUE)#http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
-      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main="Distribution des vitesses en fonction de la distance parcourrue")#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
+      plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n", main=tr('SpeedDistributionByDistance'))#plot invisible qui se met en surcouche du précédent #http://dr-k-lo.blogspot.be/2014/03/the-simplest-way-to-plot-legend-outside.html
       legend('top',legend = ages,col=col,pch=20,title = tr('PigeonsAge'),xpd=TRUE,horiz=TRUE)#,inset=c(-0.01,0)
     }
     
@@ -608,7 +609,7 @@ output$plotRankings <- renderPlot({
   withProgress(message = tr('ImportData'), value = 0, {
     #Plot avec titre et légende
     par(bty="n")
-    plot(0,0,xlim=c(-1,1),ylim=c(-1,1),xaxt='n', yaxt='n',xlab='',ylab='',type='l',main='Comparaison des classements')
+    plot(0,0,xlim=c(-1,1),ylim=c(-1,1),xaxt='n', yaxt='n',xlab='',ylab='',type='l',main=tr('RankingComparisons'))
     if(v$rankingmethods=='co'){
       text(0,1,tr('RankingMethodCO'))
       xlab<-tr('RankingMethodCOLabel')
@@ -624,7 +625,7 @@ output$plotRankings <- renderPlot({
       ylab<-tr('RankingMethodCCSNLabel')
     }
     if(v$editions=='empty'){
-      text(0,0.5,"Sélectionnez un concours ET une de ses éditions dans les listes déroulantes à gauche", col='red',cex=1.5)
+      text(0,0.5,tr('SelectRaceEditionListLeft'), col='red',cex=1.5)
     }
     
     if(v$distfactors=='cat'){
@@ -883,7 +884,7 @@ output$uiSBAdditionalSettingsTitle <- renderUI({
 
 output$uiSBPigeonsSpeed <- renderUI({
   fluidRow(column(12,
-      h5(HTML(paste("Sélection des pigeons",":",sep=" "))),
+      h5(HTML(paste(tr('SelectionOfPigeons'),":",sep=" "))),
       selectInput("racecat", label=HTML(paste(tr("Category")," :",sep="")), choices=getCategorySelection(),selected="auto",selectize=FALSE),
       selectInput("country", label=HTML(paste(tr("Countries")," :",sep="")), choices=getCountrySelection(),selected="auto",selectize=FALSE),      
       h5(HTML(paste(tr("PigeonsSpeed"),":",sep=" "))),
@@ -915,6 +916,10 @@ output$uiSBDistFact <- renderUI({
 
 output$uiSBFlightLinesHours <- renderUI({
   HTML(tr("ShowHourLines"))
+})
+
+output$uiSBDisplayNautralZones <- renderUI({
+  HTML(tr("DisplayNautralZones"))
 })
 
 output$uiSBLmLines <- renderUI({
@@ -973,7 +978,7 @@ output$uiCredits1 <- renderUI({
   mainPanel(
     p(HTML(paste("<strong>",tr("Author"),":</strong> Grégoire Vincke - <a href='http://www.gregoirevincke.be' target='_blank'>http://www.gregoirevincke.be</a> - ",tr("December")," 2015",sep=""))),
     p(HTML(paste("<strong>",tr("Translations")," :</strong> ",tr("TranslationsHowTo"),sep=""))),
-    p(HTML(paste("<strong>Licences :</strong> <ul><li><strong>Animation :</strong> <a rel='license' href='http://creativecommons.org/licenses/by/2.0/be/'><img alt='Licence Creative Commons' style='border-width:0' src='img/cc_by_80x15.png' /></a>",tr("CreditsLicence"),"</li><li><strong>Code :</strong> ",tr("SourceCodeLocation"),"</li></ul>",sep=""))),
+    p(HTML(paste("<strong>Licences :</strong> <ul><li><strong>Animation :</strong> <a rel='license' href='http://creativecommons.org/licenses/by/2.0/be/'><img alt='Licence Creative Commons' style='border-width:0' src='img/cc_by_80x15.png' /></a>&nbsp;",tr("CreditsLicence"),"</li><li><strong>Code :</strong> ",tr("SourceCodeLocation"),"</li></ul>",sep=""))),
     p(HTML(paste("<strong>",tr("Softwares")," :</strong> ",tr("SoftwaresIUsed")," :"))),
     HTML("<ul>"),
     HTML('<li><strong>R</strong> : R Core Team (2013). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL <a href="http://www.R-project.org/" target=_blank">http://www.R-project.org/</a>.</li>'),
@@ -988,7 +993,10 @@ output$uiCredits2 <- renderUI({
   mainPanel(
     p(HTML(paste("<strong>",tr("Sources")," :</strong> ",tr("SourcesiUsed")," :",sep=""))),
     HTML("<ul>"),
-    HTML("<li>&nbsp;</li>"),
+    HTML("<li><a href='http://www.pipa.be' traget='_blank'>http://www.pipa.be</a> : Pigeon Paradise</li>"),
+    HTML("<li><a href='http://lacolombophilieho.be/' traget='_blank'>http://lacolombophilieho.be/</a> : La colombophile en Hainaut Occidental</li>"),
+    # CFW, Cureghem, 
+    #Remerciements : Casaert, Phillipens, CFW, Carlier, Druart, Mirabelle
     HTML("</ul>")
   )
 })

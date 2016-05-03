@@ -62,3 +62,23 @@ RankingMethodCCSNLabel	CC  SN	CR WON	BR ZN
 ImportData	Importation des données	Import data	Gegevens importeren
 NbFilesToImport	Nombre de fichiers à importer	Number of files to import	Aantal bestanden importeren
 Countries	Pays	Countries	Countries
+SpeedWithUnit	Vitesse (m/min)	Speed (m/min)	Snelhied (m/min)
+SelectRaceListLeft	Sélectionnez un concours dans la liste déroulante à gauche	Select a race in the dropdown list on the left	Selecteer een race in de dropdown lijst aan de linkerkant
+SelectRaceEditionListLeft	Sélectionnez un concours ET une de ses éditions dans les listes déroulantes à gauche	Select a race  and one of its editions in the dropdown list on the left	Selecteer een race en een van de edities in de dropdown lijst aan de linkerkant
+SpeedDistribution	Distribution des vitesses	Distribution of speed	Snelheid verdeling
+SpeedDistributionByEdition	Distribution des vitesses par édition	Speed distribution per edition	Snelheid verdeling per editie
+SpeedDistributionByCategory	Distribution des vitesses par catégorie	Speed distribution per category	Snelheid verdeling per categorie
+SpeedDistributionByAge	Distribution des vitesses par classe d'âge	Speed distribution by age	Snelheid verdeling naar leeftijd
+SpeedDistributionByDistance	Distribution des vitesses en fonction de la distance parcourrue	Speed distribution by distance	Snelheid verdeling op afstand	
+NumberOfPigeons	Nombre de pigeons	Number of pigeons	Aantal duiven
+NumberOfPigeonsByCategory	Nombre de pigeons par catégorie	Number of pigeons per category	Aantal duiven per categorie
+NumberOfPigeonsByAge	Nombre de pigeons par classe d'âge	Number of pigeons by age	Aantal duiven naar leeftijd
+TotalNumberOfPigeons	Nombre total de pigeons 	Total number of pigeons	Total aantal duiven
+Dates	Dates	Dates	Datum
+AgeYears	Âge (années)	Age (years)	Leeftijd (jaren)
+Classified	Classés	Classified	Geklasseerd
+NotClassified	Non classés	Not classified	Niet geklasseerd
+DistanceKm	Distance (km)	Distance (km)	Afstand (km)
+RankingComparisons	Comparaison des classements	Comparaison des classements	Vergelijking van de rankings
+SelectionOfPigeons	Sélection des pigeons	Selection of pigeons	Selectie of de duiven
+DisplayNautralZones	Afficher les zones de neutralisation	Display zones neutralization	Weergave zones neutralisatie
