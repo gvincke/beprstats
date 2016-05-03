@@ -976,14 +976,17 @@ output$uiCreditsTitle <- renderUI({
 
 output$uiCredits1 <- renderUI({
   mainPanel(
-    p(HTML(paste("<strong>",tr("Author"),":</strong> Grégoire Vincke - <a href='http://www.gregoirevincke.be' target='_blank'>http://www.gregoirevincke.be</a> - ",tr("December")," 2015",sep=""))),
+    p(HTML(paste("<strong>",tr("Author"),":</strong> Grégoire Vincke - <a href='http://www.gregoirevincke.be' target='_blank'>http://www.gregoirevincke.be</a> - ",tr("May")," 2016",sep=""))),
     p(HTML(paste("<strong>",tr("Translations")," :</strong> ",tr("TranslationsHowTo"),sep=""))),
-    p(HTML(paste("<strong>Licences :</strong> <ul><li><strong>Animation :</strong> <a rel='license' href='http://creativecommons.org/licenses/by/2.0/be/'><img alt='Licence Creative Commons' style='border-width:0' src='img/cc_by_80x15.png' /></a>&nbsp;",tr("CreditsLicence"),"</li><li><strong>Code :</strong> ",tr("SourceCodeLocation"),"</li></ul>",sep=""))),
+    p(HTML(paste("<strong>Licences :</strong> <ul><li><strong>",tr('Animation')," :</strong> <a rel='license' href='http://creativecommons.org/licenses/by/2.0/be/'><img alt='Licence Creative Commons' style='border-width:0' src='img/cc_by_80x15.png' /></a>&nbsp;",tr("CreditsLicence"),"</li><li><strong>Code :</strong> ",tr("SourceCodeLocation"),"</li></ul>",sep=""))),
     p(HTML(paste("<strong>",tr("Softwares")," :</strong> ",tr("SoftwaresIUsed")," :"))),
     HTML("<ul>"),
     HTML('<li><strong>R</strong> : R Core Team (2013). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL <a href="http://www.R-project.org/" target=_blank">http://www.R-project.org/</a>.</li>'),
     HTML('<li><strong>RStudio</strong> : RStudio Team (2012). RStudio: Integrated Development for R. RStudio, Inc., Boston, MA URL <a href="http://www.rstudio.com/" target=_blank">http://www.rstudio.com/</a>.</li>'),
     HTML('<li><strong>shiny</strong> : RStudio and Inc. (2014). shiny: Web Application Framework for R. R package version 0.10.2.1. <a href="http://CRAN.R-project.org/package=shiny" target=_blank">http://CRAN.R-project.org/package=shiny</a> and <a href="http://shiny.rstudio.com" target=_blank">http://shiny.rstudio.com</a>.</li>'),
+    HTML('<li><strong>plotrix</strong> : Lemon, J. (2006) Plotrix: a package in the red light district of R.
+  R-News, 6(4): 8-12. <a href="https://cran.r-project.org/web/packages/plotrix/index.html" target=_blank">https://cran.r-project.org/web/packages/plotrix/</a>.</li>'),
+    HTML('<li><strong>png</strong> : Simon Urbanek (2013). png: Read and write PNG images. R package version 0.1-7. <a href="http://CRAN.R-project.org/package=png" target=_blank">http://CRAN.R-project.org/package=png</a>.</li>'),
     HTML("</ul>"),
     p(HTML(paste("<strong>",tr("OtherApps")," :</strong> ","<ul><li><a href='http://yapluka.be/sapps/beprmap/' target='_blank'>Belgium Pigeon Racing Map</a></li></ul>",sep="")))
   )
@@ -998,8 +1001,6 @@ output$uiCredits2 <- renderUI({
     HTML("<li><a href='http://pitts.be/' traget='_blank'>http://pitts.be/</a> : Pigeons into the Sky</li>"),
     HTML("<li><a href='http://users.skynet.be/cfw/' traget='_blank'>http://users.skynet.be/cfw/</a> : Club de Fond Wallonie</li>"),
     HTML("<li><a href='http://www.cureghem-centre.be/' traget='_blank'>http://www.cureghem-centre.be/</a> : Cureghem Centre</li>"),
-    # CFW, Cureghem, 
-    #Remerciements : Casaert, Phillipens, CFW, Carlier, Druart, Mirabelle
     HTML("</ul>"),
     p(HTML(paste("<strong>",tr("Thanks")," :</strong> ",tr("ThanksDetails")," :",sep=""))),
     HTML("<ul>"),
