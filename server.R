@@ -296,7 +296,7 @@ shinyServer(function(input, output, session) {
         # Solution : obtenir les valeurs, recréer une DB avec sructure et list puis as.matrix comme dans http://www.theanalysisfactor.com/r-11-bar-charts/ exemple datass<-structure(list(c(20,25),c(18,20),c(25,30)), .Names=c("a","b","c"), class = "data.frame", row.names=c(NA,-2L)) puis barplot(as.matrix(datass)) 
         n<-list()
         races <- read.csv("data/races.csv", sep=",", dec=".")
-        dates<-as.vector(unique(factor(races[races$name==v$races, "date"])))
+        dates<-sort(as.vector(unique(factor(races[races$name==v$races, "date"]))))
         for(d in dates){
           #catnb
           N0<-races[races$date == d & races$name==v$races, "cn0"]
